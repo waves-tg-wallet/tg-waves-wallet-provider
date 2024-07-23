@@ -14,15 +14,19 @@
 interface IProps {
 	isOpen: boolean;
 	title?: string;
+	maxWidth?: string,
+	height?: string
 }
 
 const props = withDefaults(defineProps<IProps>(), {
 	isOpen: true,
-	title: '^_^'
+	title: '^_^',
+	height: '400px',
+	maxWidth: '300px'
 });
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
 .modal--overlay {
 	display: flex;
 	justify-content: center;
@@ -41,15 +45,17 @@ const props = withDefaults(defineProps<IProps>(), {
 	position: relative;
 	background-color: inherit;
 	padding: 20px;
-	border: 1px solid #888;
 	width: 80%;
-	color: black;
-	min-height: 400px;
-	max-width: 300px;
+	background-color: var(--background-color);
+	color: var(--text-color);
+	height: v-bind('props.height');
+	max-width: v-bind('props.maxWidth');
 	border-radius: 20px;
+	display: flex;
+	flex-direction: column;
 
 	.title {
-		font-size: 1.5rem;
+		font-size: 1.2rem;
 	}
 
 	.content {
@@ -58,39 +64,7 @@ const props = withDefaults(defineProps<IProps>(), {
 		display: flex;
 		flex-direction: column;
 		width: 100%;
-		flex: 1
+		flex-grow: 1;
 	}
 }
 </style>
-<!-- 
-
-<template>
-	<div v-if="isOpen" class="modal">
-	  <div class="modal-content">
-		
-		
-	  </div>
-	</div>
-  </template>
-  
-  <script setup>
-  import { ref, watch } from 'vue';
-  
-  
-  
-  const emit = defineEmits(['close']);
-  
-  const close = () => {
-	emit('close');
-  };
-  
-  watch(() => props.isOpen, (newValue) => {
-	if (!newValue) {
-	  close();
-	}
-  });
-  </script>
-  
-  
-  
- -->

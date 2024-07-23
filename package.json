@@ -10,11 +10,16 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@vueuse/core": "^10.11.0",
+    "@vueuse/integrations": "^10.11.0",
     "@waves/signer": "^1.1.0",
+    "axios": "^1.7.2",
+    "qrcode": "^1.5.3",
     "vue": "^3.4.31"
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.0.5",
+    "sass": "^1.77.8",
     "typescript": "^5.2.2",
     "vite": "^5.3.4",
     "vue-tsc": "^2.0.24"
