@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<ConnectionView :url="url" />
+		<ConnectionView :id="id" />
 	</div>
 </template>
 
@@ -10,7 +10,7 @@ import ConnectionView from './views/ConnectionView.vue'
 
 console.log(import.meta.env)
 
-const url = `${import.meta.env.VITE_WEB_APP_URL}?startapp=012345678901234567890123456789012345678901234567`
+const id = `012345678901234567890123456789012345678901234567`
 </script>
 
 <style scoped>

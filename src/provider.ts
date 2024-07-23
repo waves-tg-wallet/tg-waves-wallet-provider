@@ -1,3 +1,4 @@
+import './global.css'
 import {
 	AuthEvents,
 	ConnectOptions,
@@ -9,10 +10,11 @@ import {
 	UserData,
 } from "@waves/signer";
 
+import Cookies from 'js-cookie'
 import ConnectionView from './views/ConnectionView.vue'
 import { createApp, h } from "vue";
 import { loadConnection } from "./utils/connection";
-import { get } from "./utils/http";
+import { get } from './utils/http';
 
 // login() {
 //     return new Promise((resolve, reject) => {
@@ -61,10 +63,14 @@ export class TelegramProvider implements Provider {
 		return Promise.resolve();
 	}
 
+
+	//TODO: urlсайта и имя
 	login(): Promise<UserData> {
 		return new Promise((resolve, reject) => {
 			loadConnection().then((connection) => {
-				if (connection.status === 'approved' && connection.publicKey !== undefined) {
+				if (connection.status === 'new') {
+					Cookies.set('token', connection.token)
+				} else if (connection.status === 'approved' && connection.publicKey !== undefined) {
 					resolve({
 						address: connection.address!,
 						publicKey: connection.publicKey
@@ -74,7 +80,7 @@ export class TelegramProvider implements Provider {
 				document.body.appendChild(container);
 				const app = createApp({
 					setup() {
-						const handleConnected = (value: { publicKey: string, address: string }) => {
+						const handleConnected = (value: UserData) => {
 							resolve({
 								address: value.address,
 								publicKey: value.publicKey
@@ -112,8 +118,7 @@ export class TelegramProvider implements Provider {
 		try {
 			await get('/delete');
 		} catch { }
-		const cookieName = 'token';
-		document.cookie = `${cookieName}=; expires=Thu, 01 Jan 1970 00:00:00 GMT; path=/`;
+		Cookies.remove('token')
 		return Promise.resolve();
 	}
 	//@ts-ignore

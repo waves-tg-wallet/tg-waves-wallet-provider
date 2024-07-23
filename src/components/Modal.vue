@@ -55,6 +55,8 @@ const props = withDefaults(defineProps<IProps>(), {
 	flex-direction: column;
 
 	.title {
+		display: flex;
+		justify-content: center;
 		font-size: 1.2rem;
 	}
 

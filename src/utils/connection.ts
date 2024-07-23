@@ -15,7 +15,7 @@ export interface IConnectionResponse {
 
 export const loadConnection = async (): Promise<IConnectionResponse> => {
 	try {
-		const connection = await get<IConnectionResponse>('/info');
+		const connection = await get<IConnectionResponse>('/connection/info');
 		return Promise.resolve(connection);
 	} catch {}
 	return Promise.reject()

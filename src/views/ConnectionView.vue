@@ -4,7 +4,7 @@
 			<img :src="qrcode" style="width:80%" />
 		</div>
 		<div id="link">
-			<a :href="props.url">OPEN VIA TELEGRAM</a>
+			<a :href="url">OPEN VIA TELEGRAM</a>
 		</div>
 		<div style="flex: 1; display: flex; justify-content: center; align-items: center">
 			<div class="loader"></div>
@@ -14,24 +14,22 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import Modal from '../components/Modal.vue';
 //@ts-ignore
 import { useQRCode } from '@vueuse/integrations/useQRCode'
 import { loadConnection } from '../utils/connection';
+import { UserData } from '@waves/signer';
 
 interface IProps {
-	url: string;
-}
-
-interface IResult {
-	publicKey: string,
-	address: string
+	id: string;
 }
 
 const props = defineProps<IProps>();
 
-const qrcode = useQRCode(props.url, {
+const url = computed<string>(() => `${import.meta.env.VITE_WEB_APP_URL}?startapp=${props.id}`);
+
+const qrcode = useQRCode(url, {
 	margin: 1,
 	errorCorrectionLevel: 'H',
 	scale: 4,
@@ -41,7 +39,7 @@ const qrcode = useQRCode(props.url, {
 const isModalOpen = ref(true);
 
 const emit = defineEmits<{
-	(e: 'connected', value: IResult): void;
+	(e: 'connected', value: UserData): void;
 	(e: 'rejected', value: string): void;
 }>();
 
@@ -52,25 +50,26 @@ const reject = (message: string) => {
 
 let tries = 0;
 let badTries = 0;
-const timeoutId = setTimeout(async () => {
+const intervalId = setInterval(async () => {
 	if (tries === 30 || badTries === 3) {
 		reject('timeout');
-		clearTimeout(timeoutId);
+		clearInterval(intervalId);
 	}
 	try {
 		const connection = await loadConnection();
 		if (connection.status === 'rejected') {
 			reject('rejected');
-			clearTimeout(timeoutId);
+			clearInterval(intervalId);
 		} else if (connection.status === 'approved') {
 			emit('connected', {
 				publicKey: connection.publicKey!,
 				address: connection.address!
 			});
 			isModalOpen.value = false;
-			clearTimeout(timeoutId);
+			clearInterval(intervalId);
 		}
 		tries += 1;
+		console.log(tries);
 	} catch {
 		badTries += 1;
 	}
@@ -87,6 +86,10 @@ const timeoutId = setTimeout(async () => {
 
 #link {
 	margin-top: 20px;
+	width: 100%;
+	display: flex;
+	justify-content: center;
+
 
 	a,
 	a:hover {

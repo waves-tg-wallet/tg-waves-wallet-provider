@@ -14,10 +14,12 @@
     "@vueuse/integrations": "^10.11.0",
     "@waves/signer": "^1.1.0",
     "axios": "^1.7.2",
+    "js-cookie": "^3.0.5",
     "qrcode": "^1.5.3",
     "vue": "^3.4.31"
   },
   "devDependencies": {
+    "@types/js-cookie": "^3.0.6",
     "@vitejs/plugin-vue": "^5.0.5",
     "sass": "^1.77.8",
     "typescript": "^5.2.2",
