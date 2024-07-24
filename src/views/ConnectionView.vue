@@ -20,6 +20,7 @@ import Modal from '../components/Modal.vue';
 import { useQRCode } from '@vueuse/integrations/useQRCode'
 import { loadConnection } from '../utils/connection';
 import { UserData } from '@waves/signer';
+import { base58Encode, stringToBytes } from '@waves/ts-lib-crypto';
 
 interface IProps {
 	id: string;
@@ -27,7 +28,17 @@ interface IProps {
 
 const props = defineProps<IProps>();
 
-const url = computed<string>(() => `${import.meta.env.VITE_WEB_APP_URL}?startapp=${props.id}`);
+const title = document.title;
+const hostname = document.location.hostname;
+const queryString = base58Encode(stringToBytes(JSON.stringify({
+	method: 'connect',
+	id: props.id,
+	appName: title,
+	appUrl: hostname
+})));
+const pathname = `?startapp=${queryString}`
+console.log(pathname);
+const url = computed<string>(() => `${import.meta.env.VITE_WEB_APP_URL}${pathname}`);
 
 const qrcode = useQRCode(url, {
 	margin: 1,
@@ -48,32 +59,34 @@ const reject = (message: string) => {
 	isModalOpen.value = false;
 };
 
-let tries = 0;
-let badTries = 0;
-const intervalId = setInterval(async () => {
-	if (tries === 30 || badTries === 3) {
-		reject('timeout');
-		clearInterval(intervalId);
-	}
-	try {
-		const connection = await loadConnection();
-		if (connection.status === 'rejected') {
-			reject('rejected');
-			clearInterval(intervalId);
-		} else if (connection.status === 'approved') {
-			emit('connected', {
-				publicKey: connection.publicKey!,
-				address: connection.address!
-			});
-			isModalOpen.value = false;
+if (!import.meta.env.DEV) {
+	let tries = 0;
+	let badTries = 0;
+	const intervalId = setInterval(async () => {
+		if (tries === 30 || badTries === 3) {
+			reject('timeout');
 			clearInterval(intervalId);
 		}
-		tries += 1;
-		console.log(tries);
-	} catch {
-		badTries += 1;
-	}
-}, 1000);
+		try {
+			const connection = await loadConnection();
+			if (connection.status === 'rejected') {
+				reject('rejected');
+				clearInterval(intervalId);
+			} else if (connection.status === 'approved') {
+				emit('connected', {
+					publicKey: connection.publicKey!,
+					address: connection.address!
+				});
+				isModalOpen.value = false;
+				clearInterval(intervalId);
+			}
+			tries += 1;
+			console.log(tries);
+		} catch {
+			badTries += 1;
+		}
+	}, 1000);
+}
 </script>
 
 <style scoped>

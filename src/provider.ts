@@ -14,33 +14,7 @@ import Cookies from 'js-cookie'
 import ConnectionView from './views/ConnectionView.vue'
 import { createApp, h } from "vue";
 import { loadConnection } from "./utils/connection";
-import { get } from './utils/http';
-
-// login() {
-//     return new Promise((resolve, reject) => {
-//       const container = document.createElement('div');
-//       document.body.appendChild(container);
-
-//       const app = createApp({
-//         setup() {
-//           const handleSeedSubmit = (seed) => {
-//             this.seed = seed;
-//             resolve({ address: 'address_generated_from_seed' }); // генерируйте адрес из seed
-//             app.unmount();
-//             document.body.removeChild(container);
-//           };
-
-//           return { handleSeedSubmit };
-//         },
-//         render() {
-//           return <SeedInput onSubmit={this.handleSeedSubmit} />;
-//         }
-//       });
-
-//       app.mount(container);
-//     });
-//   }
-
+import { get, post } from './utils/http';
 
 export class TelegramProvider implements Provider {
 	public user: UserData | null = null;
@@ -63,8 +37,6 @@ export class TelegramProvider implements Provider {
 		return Promise.resolve();
 	}
 
-
-	//TODO: urlсайта и имя
 	login(): Promise<UserData> {
 		return new Promise((resolve, reject) => {
 			loadConnection().then((connection) => {
@@ -133,6 +105,40 @@ export class TelegramProvider implements Provider {
 	sign<T extends Array<SignerTx>>(toSign: T): Promise<SignedTx<T>>;
 	//@ts-ignore
 	public async sign(list: Array<SignerTx>): Promise<Array<SignedTx<SignerTx>>> {
-		throw new Error("Method not implemented.");
+		if (list.length > 1) {
+			throw new Error("Only one transaction allowed");
+		} else {
+			try {
+				const tx = list[0];
+				const requested = await post<{ id: string, status: 'new' | 'approved' | 'rejected' }>('/transaction/request_sign', tx);
+				const { id, status } = requested;
+				if (status && status === 'new') {
+					let tries = 0;
+					let badTries = 0;
+					const intervalId = setInterval(async () => {
+						if (tries === 30 || badTries === 3) {
+							clearInterval(intervalId);
+							return Promise.reject('timeout');
+						}
+						try {
+							const signStatus = await get<{ id: string, status: 'new' | 'approved' | 'rejected' }>(`/status/${id}`)
+							if (signStatus.status === 'rejected') {
+								clearInterval(intervalId);
+								return Promise.reject('rejected');
+							} else if (signStatus.status === 'approved') {
+								clearInterval(intervalId);
+								return Promise.resolve();
+							}
+							tries += 1;
+						} catch {
+							badTries += 1;
+						}
+					}, 1000);
+				}
+			} catch (ex) {
+				console.log(ex)
+				return Promise.reject();
+			}
+		}
 	}
 }
