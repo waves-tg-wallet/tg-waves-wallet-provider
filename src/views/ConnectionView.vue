@@ -63,7 +63,7 @@ if (!import.meta.env.DEV) {
 	let tries = 0;
 	let badTries = 0;
 	const intervalId = setInterval(async () => {
-		if (tries === 30 || badTries === 3) {
+		if (tries === 120 || badTries === 3) {
 			reject('timeout');
 			clearInterval(intervalId);
 		}
@@ -72,9 +72,9 @@ if (!import.meta.env.DEV) {
 			if (connection.status === 'rejected') {
 				reject('rejected');
 				clearInterval(intervalId);
-			} else if (connection.status === 'approved') {
+			} else if (connection.status === 'approved' && connection.publicKey) {
 				emit('connected', {
-					publicKey: connection.publicKey!,
+					publicKey: connection.publicKey,
 					address: connection.address!
 				});
 				isModalOpen.value = false;

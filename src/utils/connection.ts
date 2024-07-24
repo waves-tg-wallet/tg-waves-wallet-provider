@@ -3,12 +3,8 @@ import { get } from "./http"
 export interface IConnectionResponse {
 	_id: string,
 	token: string,
-	appUrl?: string,
-	appName?: string,
-	chatId?: number,
-	createdAt: Date,
 	status: 'new' | 'approved' | 'rejected',
-	expired?: Date,
+	chatId?: number,
 	publicKey?: string,
 	address?: string
 }

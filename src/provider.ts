@@ -47,6 +47,7 @@ export class TelegramProvider implements Provider {
 						address: connection.address!,
 						publicKey: connection.publicKey
 					});
+					return;
 				}
 				const container = document.createElement('div');
 				document.body.appendChild(container);
