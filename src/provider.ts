@@ -36,6 +36,7 @@ export class TelegramProvider implements Provider {
 	connect(_options: ConnectOptions): Promise<void> {
 		return Promise.resolve();
 	}
+	
 
 	login(): Promise<UserData> {
 		return new Promise((resolve, reject) => {
