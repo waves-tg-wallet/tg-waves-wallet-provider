@@ -1,18 +1,16 @@
 <template>
-    <Modal :isOpen="isModalOpen" title="Connect your wallet">
-        <div id="qr">
-            <img :src="qrcode" style="width:80%" />
-        </div>
-        <div id="link">
-            <a :href="url">OPEN VIA TELEGRAM</a>
-        </div>
-        <div
-            style="flex: 1; display: flex; justify-content: center; align-items: center"
-        >
-            <div class="loader"></div>
-        </div>
-        <button @click="reject('rejected')">Reject</button>
-    </Modal>
+	<Modal :isOpen="isModalOpen" title="Connect your wallet">
+		<div id="qr">
+			<img :src="qrcode" style="width:80%" />
+		</div>
+		<div id="link">
+			<a :href="url">OPEN VIA TELEGRAM</a>
+		</div>
+		<div style="flex: 1; display: flex; justify-content: center; align-items: center">
+			<div class="loader"></div>
+		</div>
+		<button @click="reject('rejected')">Reject</button>
+	</Modal>
 </template>
 
 <script lang="ts" setup>
@@ -25,8 +23,7 @@ import { UserData } from '@waves/signer';
 import { base58Encode, stringToBytes } from '@waves/ts-lib-crypto';
 
 interface IProps {
-	token: string;
-    networkByte: number;
+	id: string;
 }
 
 const props = defineProps<IProps>();
@@ -35,10 +32,9 @@ const title = document.title;
 const hostname = document.location.hostname;
 const queryString = base58Encode(stringToBytes(JSON.stringify({
 	method: 'connect',
-    networkByte: props.networkByte,
-	token: props.token,
+	id: props.id,
 	appName: title,
-	appUrl: hostname,
+	appUrl: hostname
 })));
 const pathname = `?startapp=${queryString}`
 console.log(pathname);
