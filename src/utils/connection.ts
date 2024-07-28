@@ -9,9 +9,9 @@ export interface IConnectionResponse {
 	address?: string
 }
 
-export const loadConnection = async (): Promise<IConnectionResponse> => {
+export const loadConnection = async (token?: string): Promise<IConnectionResponse> => {
 	try {
-		const connection = await get<IConnectionResponse>('/connection/info');
+		const connection = await get<IConnectionResponse>('/connection/info', token);
 		return Promise.resolve(connection);
 	} catch {}
 	return Promise.reject()

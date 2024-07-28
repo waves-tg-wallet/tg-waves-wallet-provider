@@ -1,9 +1,7 @@
 import axios from 'axios';
-import Cookies from 'js-cookie'
 
-export function get<T>(pathname: string): Promise<T> {
+export function get<T>(pathname: string, token?: string): Promise<T> {
 	const headers: { [key: string]: string} = {};
-	const token = Cookies.get('token');
 	if (token) {
 		headers['token'] = token;
 	}
@@ -23,9 +21,8 @@ export function get<T>(pathname: string): Promise<T> {
 	});
 }
 
-export function post<T>(pathname: string, body: {}): Promise<T> {
+export function post<T>(pathname: string, body: {}, token?: string): Promise<T> {
 	const headers: { [key: string]: string} = {};
-	const token = Cookies.get('token');
 	if (token) {
 		headers['token'] = token;
 	}

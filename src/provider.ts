@@ -15,6 +15,7 @@ import ConnectionView from './views/ConnectionView.vue'
 import { createApp, h } from "vue";
 import { loadConnection } from "./utils/connection";
 import { get, post } from './utils/http';
+import { sleep } from './utils';
 
 export class TelegramProvider implements Provider {
 	public user: UserData | null = null;
@@ -39,10 +40,11 @@ export class TelegramProvider implements Provider {
 	
 
 	login(): Promise<UserData> {
+		let token: string;
 		return new Promise((resolve, reject) => {
 			loadConnection().then((connection) => {
 				if (connection.status === 'new') {
-					Cookies.set('token', connection.token)
+					token = connection.token;
 				} else if (connection.status === 'approved' && connection.publicKey !== undefined) {
 					resolve({
 						address: connection.address!,
@@ -70,7 +72,8 @@ export class TelegramProvider implements Provider {
 						}
 
 						const props = {
-							id: connection._id
+							id: connection._id,
+							token: token
 						}
 
 						return () => h(ConnectionView, {
@@ -111,31 +114,30 @@ export class TelegramProvider implements Provider {
 			throw new Error("Only one transaction allowed");
 		} else {
 			try {
+				const token = Cookies.get('token');
 				const tx = list[0];
-				const requested = await post<{ id: string, status: 'new' | 'approved' | 'rejected' }>('/transaction/request_sign', tx);
+				const requested = await post<{ id: string, status: 'new' | 'approved' | 'rejected' }>('/transaction/request_sign', tx, token);
 				const { id, status } = requested;
 				if (status && status === 'new') {
-					let tries = 0;
 					let badTries = 0;
-					const intervalId = setInterval(async () => {
-						if (tries === 30 || badTries === 3) {
-							clearInterval(intervalId);
-							return Promise.reject('timeout');
-						}
+					for (let t = 1; t <= 30; t++) {
 						try {
-							const signStatus = await get<{ id: string, status: 'new' | 'approved' | 'rejected' }>(`/status/${id}`)
+							const signStatus = await get<{ id: string, status: 'new' | 'approved' | 'rejected' }>(`/transaction/status/${id}`, token);
 							if (signStatus.status === 'rejected') {
-								clearInterval(intervalId);
 								return Promise.reject('rejected');
 							} else if (signStatus.status === 'approved') {
-								clearInterval(intervalId);
+								//@ts-ignore
 								return Promise.resolve();
 							}
-							tries += 1;
 						} catch {
 							badTries += 1;
 						}
-					}, 1000);
+						if (badTries === 3) {
+							return Promise.reject(new Error('timeout'));
+						}
+						await sleep(1000);
+					}
+					return Promise.reject(new Error('timeout'));
 				}
 			} catch (ex) {
 				console.log(ex)

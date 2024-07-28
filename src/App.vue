@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<ConnectionView :id="id" />
+		<ConnectionView :id="id" token="dsfds" />
 	</div>
 </template>
 
