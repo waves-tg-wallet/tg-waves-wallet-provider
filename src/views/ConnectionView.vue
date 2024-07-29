@@ -4,7 +4,7 @@
 			<img :src="qrcode" style="width:80%" />
 		</div>
 		<div id="link">
-			<a :href="url">OPEN VIA TELEGRAM</a>
+			<a :href="url" target="_blank">OPEN VIA TELEGRAM</a>
 		</div>
 		<div style="flex: 1; display: flex; justify-content: center; align-items: center">
 			<div class="loader"></div>
