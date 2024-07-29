@@ -66,7 +66,7 @@ if (!import.meta.env.DEV) {
 	let tries = 0;
 	let badTries = 0;
 	intervalId = setInterval(async () => {
-		if (tries === 120 || badTries === 3) {
+		if (tries === 30 || badTries === 3) {
 			reject('timeout');
 			clearInterval(intervalId);
 		}
@@ -85,7 +85,6 @@ if (!import.meta.env.DEV) {
 				clearInterval(intervalId);
 			}
 			tries += 1;
-			console.log(tries);
 		} catch {
 			badTries += 1;
 		}
