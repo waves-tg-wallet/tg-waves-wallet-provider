@@ -21,6 +21,7 @@ import { useQRCode } from '@vueuse/integrations/useQRCode'
 import { loadConnection } from '../utils/connection';
 import { UserData } from '@waves/signer';
 import Cookies from 'js-cookie'
+import { onMounted } from 'vue';
 
 interface IProps {
 	id: string;
@@ -90,6 +91,12 @@ if (!import.meta.env.DEV) {
 		}
 	}, 1000);
 }
+
+onMounted(() => {
+	if (window.Telegram && typeof window.Telegram.WebApp.openTelegramLink === 'function') {
+		window.Telegram.WebApp.openTelegramLink(url.value);
+	}
+});
 </script>
 
 <style scoped>
