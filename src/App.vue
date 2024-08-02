@@ -1,6 +1,6 @@
 <template>
 	<div>
-		<ConnectionView :id="id" token="dsfds" />
+		<ConnectionView :id="id" token="dsfds" :network-byte="'W'.charCodeAt(0)"/>
 	</div>
 </template>
 

@@ -25,7 +25,8 @@ import { onMounted } from 'vue';
 
 interface IProps {
 	id: string;
-	token: string
+	token: string;
+	networkByte: number;
 }
 
 const props = defineProps<IProps>();
@@ -33,10 +34,11 @@ const props = defineProps<IProps>();
 const title = document.title;
 const hostname = document.location.hostname;
 const queryString = window.btoa(JSON.stringify({
-	method: 'connect',
+	method: 'connect_rpc',
 	id: props.id,
-	appName: title,
-	appUrl: hostname
+	appName: title.substr(0, 16),
+	appUrl: hostname,
+	networkByte: props.networkByte
 }));
 const pathname = `?startapp=${queryString}`;
 const url = computed<string>(() => `${import.meta.env.VITE_WEB_APP_URL}${pathname}`);
@@ -93,7 +95,7 @@ if (!import.meta.env.DEV) {
 }
 
 onMounted(() => {
-	if (window.Telegram && typeof window.Telegram.WebApp.openTelegramLink === 'function') {
+	if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openTelegramLink === 'function') {
 		window.Telegram.WebApp.openTelegramLink(url.value);
 	}
 });

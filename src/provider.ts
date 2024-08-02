@@ -19,6 +19,10 @@ import { sleep } from './utils';
 
 export class TelegramProvider implements Provider {
 	public user: UserData | null = null;
+	private options: ConnectOptions = {
+        NETWORK_BYTE: 'W'.charCodeAt(0),
+        NODE_URL: 'https://nodes.wavesplatform.com',
+    };
 
 	isSignAndBroadcastByProvider?: false;
 	//@ts-ignore
@@ -34,7 +38,8 @@ export class TelegramProvider implements Provider {
 		throw new Error("Method not implemented.");
 	}
 
-	connect(_options: ConnectOptions): Promise<void> {
+	connect(options: ConnectOptions): Promise<void> {
+		this.options = options;
 		return Promise.resolve();
 	}
 	
@@ -42,6 +47,7 @@ export class TelegramProvider implements Provider {
 	login(): Promise<UserData> {
 		let token: string;
 		return new Promise((resolve, reject) => {
+			const options = this.options;
 			loadConnection().then((connection) => {
 				if (connection.status === 'new') {
 					token = connection.token;
@@ -73,7 +79,8 @@ export class TelegramProvider implements Provider {
 
 						const props = {
 							id: connection._id,
-							token: token
+							token: token,
+							networkByte: options.NETWORK_BYTE
 						}
 
 						return () => h(ConnectionView, {
