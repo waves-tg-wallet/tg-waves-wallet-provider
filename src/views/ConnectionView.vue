@@ -65,39 +65,58 @@ const reject = (message: string) => {
 	isModalOpen.value = false;
 };
 
-if (!import.meta.env.DEV) {
-	let tries = 0;
-	let badTries = 0;
-	intervalId = setInterval(async () => {
-		if (tries === 30 || badTries === 3) {
-			reject('timeout');
-			clearInterval(intervalId);
-		}
-		try {
-			const connection = await loadConnection(props.token);
-			if (connection.status === 'rejected') {
-				reject('rejected');
-				clearInterval(intervalId);
-			} else if (connection.status === 'approved' && connection.publicKey) {
-				Cookies.set('token', props.token);
-				emit('connected', {
-					publicKey: connection.publicKey,
-					address: connection.address!
-				});
-				isModalOpen.value = false;
-				clearInterval(intervalId);
-			}
-			tries += 1;
-		} catch {
-			badTries += 1;
-		}
-	}, 1000);
-}
+//if (!import.meta.env.DEV) {
+//	let tries = 0;
+//	let badTries = 0;
+//	intervalId = setInterval(async () => {
+//		if (tries === 30 || badTries === 3) {
+//			reject('timeout');
+//			clearInterval(intervalId);
+//		}
+//		try {
+//			const connection = await loadConnection(props.token);
+//			if (connection.status === 'rejected') {
+//				reject('rejected');
+//				clearInterval(intervalId);
+//			} else if (connection.status === 'approved' && connection.publicKey) {
+//				Cookies.set('token', props.token);
+//				emit('connected', {
+//					publicKey: connection.publicKey,
+//					address: connection.address!
+//				});
+//				isModalOpen.value = false;
+//				clearInterval(intervalId);
+//			}
+//			tries += 1;
+//		} catch {
+//			badTries += 1;
+//		}
+//	}, 1000);
+//}
 
 onMounted(() => {
-	if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openTelegramLink === 'function') {
-		window.Telegram.WebApp.openTelegramLink(url.value);
-	}
+	//if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openTelegramLink === 'function') {
+	//	window.Telegram.WebApp.openTelegramLink(url.value);
+	//}
+	const webSocket = new WebSocket('wss://waveswallet.net/ws-provider/');
+
+	webSocket.onmessage = function (event) {
+		console.log(event);
+	};
+
+	webSocket.onclose = function (event) {
+		if (event.wasClean) {
+			console.log(`[close] Соединение закрыто чисто, код=${event.code} причина=${event.reason}`);
+		} else {
+			// например, сервер убил процесс или сеть недоступна
+			// обычно в этом случае event.code 1006
+			console.log('[close] Соединение прервано');
+		}
+	};
+
+	webSocket.onerror = function (error) {
+		console.log(error);
+	};
 });
 </script>
 

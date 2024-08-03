@@ -45,10 +45,10 @@ export class TelegramProvider implements Provider {
 	
 
 	login(): Promise<UserData> {
-		let token: string;
+		let token = Cookies.get('token');
 		return new Promise((resolve, reject) => {
 			const options = this.options;
-			loadConnection().then((connection) => {
+			loadConnection(token).then((connection) => {
 				if (connection.status === 'new') {
 					token = connection.token;
 				} else if (connection.status === 'approved' && connection.publicKey !== undefined) {
@@ -79,7 +79,7 @@ export class TelegramProvider implements Provider {
 
 						const props = {
 							id: connection._id,
-							token: token,
+							token: token!,
 							networkByte: options.NETWORK_BYTE
 						}
 
