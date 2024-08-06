@@ -68,7 +68,7 @@ onMounted(() => {
 	//if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openTelegramLink === 'function') {
 	//	window.Telegram.WebApp.openTelegramLink(url.value);
 	//}
-	const url = `${import.meta.env.VITE_WEB_APP_URL}/?token=${props.id}`;
+	const url = `${import.meta.env.VITE_WS_PROVIDER_URL}/?token=${props.id}`;
 	const webSocket = new WebSocket(url);
 
 	webSocket.onmessage = function (event) {

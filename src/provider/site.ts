@@ -1,4 +1,3 @@
-import './global.css'
 import {
 	AuthEvents,
 	ConnectOptions,
@@ -11,13 +10,13 @@ import {
 } from "@waves/signer";
 
 import Cookies from 'js-cookie'
-import ConnectionView from './views/ConnectionView.vue'
+import ConnectionView from '../views/ConnectionView.vue'
 import { createApp, h } from "vue";
-import { loadConnection } from "./utils/connection";
-import { get, post } from './utils/http';
+import { loadConnection } from "../utils/connection";
+import { get, post } from '../utils/http';
 // import { sleep } from './utils';
 
-export class TelegramProvider implements Provider {
+export class SiteTelegramProvider implements Provider {
 	public user: UserData | null = null;
 	private options: ConnectOptions = {
         NETWORK_BYTE: 'W'.charCodeAt(0),
@@ -113,17 +112,18 @@ export class TelegramProvider implements Provider {
 	signTypedData(data: Array<TypedData>): Promise<string> {
 		throw new Error("Method not implemented.");
 	}
-	sign<T extends SignerTx>(toSign: T[]): Promise<SignedTx<T>>;
-	sign<T extends Array<SignerTx>>(toSign: T): Promise<SignedTx<T>>;
-	//@ts-ignore
-	public async sign(list: Array<SignerTx>): Promise<Array<SignedTx<SignerTx>>> {
+
+	//sign<T extends SignerTx>(toSign: T[]): Promise<SignedTx<T>>;
+	//sign<T extends Array<SignerTx>>(toSign: T): Promise<SignedTx<T>>;
+    
+	public async sign(toSign: SignerTx[]): Promise<SignedTx<SignerTx[]>> {
 		return new Promise(async (resolve, reject) => {
-			if (list.length > 1) {
+			if (toSign.length > 1) {
 				reject("Only one transaction allowed");
 			} else {
 				try {
 					const token = Cookies.get('token');
-					const tx = list[0];
+					const tx = toSign[0];
 					const requested = await post<{ id: string, status: 'success' | 'failed' }>('/transaction/request_sign', {
 						tx: {
 							...tx
@@ -132,7 +132,7 @@ export class TelegramProvider implements Provider {
 					}, token);
 					const { id, status } = requested;
 					if (status && status === 'success') {
-						const url = `${import.meta.env.VITE_WS_BACKEND_URL}/?token=${id}`;
+						const url = `${import.meta.env.VITE_WS_PROVIDER_URL}/?token=${id}`;
 						const webSocket = new WebSocket(url);
 						webSocket.onmessage = function (event) {
 							try {

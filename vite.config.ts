@@ -6,7 +6,7 @@ export default defineConfig({
     plugins: [vue()],
     build: {
         lib: {
-            entry: "src/provider.ts",
+            entry: "src/provider/index.ts",
             name: "TelegramProvider",
             fileName: (format) => `telegram-provider.${format}.js`,
         },

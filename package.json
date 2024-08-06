@@ -3,7 +3,7 @@
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "main": "src/provider.ts",
+  "main": "src/provider/index.ts",
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",
@@ -17,6 +17,7 @@
     "js-cookie": "^3.0.5",
     "qrcode": "^1.5.3",
     "tslib": "^2.6.3",
+    "uuid": "^10.0.0",
     "vue": "^3.4.31"
   },
   "devDependencies": {
