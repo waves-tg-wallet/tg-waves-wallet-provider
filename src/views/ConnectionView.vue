@@ -18,7 +18,6 @@ import { ref, computed } from 'vue';
 import Modal from '../components/Modal.vue';
 //@ts-ignore
 import { useQRCode } from '@vueuse/integrations/useQRCode'
-import { loadConnection } from '../utils/connection';
 import { UserData } from '@waves/signer';
 import Cookies from 'js-cookie'
 import { onMounted } from 'vue';
@@ -36,7 +35,7 @@ const hostname = document.location.hostname;
 const queryString = window.btoa(JSON.stringify({
 	method: 'connect_rpc',
 	id: props.id,
-	appName: title.substr(0, 16),
+	appName: title.substring(0, 16),
 	appUrl: hostname,
 	networkByte: props.networkByte
 }));
@@ -65,57 +64,36 @@ const reject = (message: string) => {
 	isModalOpen.value = false;
 };
 
-//if (!import.meta.env.DEV) {
-//	let tries = 0;
-//	let badTries = 0;
-//	intervalId = setInterval(async () => {
-//		if (tries === 30 || badTries === 3) {
-//			reject('timeout');
-//			clearInterval(intervalId);
-//		}
-//		try {
-//			const connection = await loadConnection(props.token);
-//			if (connection.status === 'rejected') {
-//				reject('rejected');
-//				clearInterval(intervalId);
-//			} else if (connection.status === 'approved' && connection.publicKey) {
-//				Cookies.set('token', props.token);
-//				emit('connected', {
-//					publicKey: connection.publicKey,
-//					address: connection.address!
-//				});
-//				isModalOpen.value = false;
-//				clearInterval(intervalId);
-//			}
-//			tries += 1;
-//		} catch {
-//			badTries += 1;
-//		}
-//	}, 1000);
-//}
-
 onMounted(() => {
 	//if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openTelegramLink === 'function') {
 	//	window.Telegram.WebApp.openTelegramLink(url.value);
 	//}
-	const webSocket = new WebSocket('wss://waveswallet.net/ws-provider/');
+	const url = `${import.meta.env.VITE_WEB_APP_URL}/?token=${props.id}`;
+	const webSocket = new WebSocket(url);
 
 	webSocket.onmessage = function (event) {
-		console.log(event);
+		try {
+			const data = JSON.parse(event.data) as UserData;
+			if (webSocket.OPEN) {
+				webSocket.close();
+			}
+			Cookies.set('token', props.token);
+			emit('connected', {
+				publicKey: data.publicKey,
+				address: data.address
+			});
+		} catch {
+			reject('something went wrong');
+		}
 	};
 
-	webSocket.onclose = function (event) {
-		if (event.wasClean) {
-			console.log(`[close] Соединение закрыто чисто, код=${event.code} причина=${event.reason}`);
-		} else {
-			// например, сервер убил процесс или сеть недоступна
-			// обычно в этом случае event.code 1006
-			console.log('[close] Соединение прервано');
-		}
+	webSocket.onclose = function (_event) {
+		reject('timeout');
 	};
 
 	webSocket.onerror = function (error) {
 		console.log(error);
+		reject('something went wrong');
 	};
 });
 </script>

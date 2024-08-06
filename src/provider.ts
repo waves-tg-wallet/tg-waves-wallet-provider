@@ -15,7 +15,7 @@ import ConnectionView from './views/ConnectionView.vue'
 import { createApp, h } from "vue";
 import { loadConnection } from "./utils/connection";
 import { get, post } from './utils/http';
-import { sleep } from './utils';
+// import { sleep } from './utils';
 
 export class TelegramProvider implements Provider {
 	public user: UserData | null = null;
@@ -117,39 +117,49 @@ export class TelegramProvider implements Provider {
 	sign<T extends Array<SignerTx>>(toSign: T): Promise<SignedTx<T>>;
 	//@ts-ignore
 	public async sign(list: Array<SignerTx>): Promise<Array<SignedTx<SignerTx>>> {
-		if (list.length > 1) {
-			throw new Error("Only one transaction allowed");
-		} else {
-			try {
-				const token = Cookies.get('token');
-				const tx = list[0];
-				const requested = await post<{ id: string, status: 'new' | 'approved' | 'rejected' }>('/transaction/request_sign', tx, token);
-				const { id, status } = requested;
-				if (status && status === 'new') {
-					let badTries = 0;
-					for (let t = 1; t <= 30; t++) {
-						try {
-							const signStatus = await get<{ id: string, status: 'new' | 'approved' | 'rejected' }>(`/transaction/status/${id}`, token);
-							if (signStatus.status === 'rejected') {
-								return Promise.reject('rejected');
-							} else if (signStatus.status === 'approved') {
-								//@ts-ignore
-								return Promise.resolve();
+		return new Promise(async (resolve, reject) => {
+			if (list.length > 1) {
+				reject("Only one transaction allowed");
+			} else {
+				try {
+					const token = Cookies.get('token');
+					const tx = list[0];
+					const requested = await post<{ id: string, status: 'success' | 'failed' }>('/transaction/request_sign', {
+						tx: {
+							...tx
+						},
+						networkByte: this.options.NETWORK_BYTE
+					}, token);
+					const { id, status } = requested;
+					if (status && status === 'success') {
+						const url = `${import.meta.env.VITE_WS_BACKEND_URL}/?token=${id}`;
+						const webSocket = new WebSocket(url);
+						webSocket.onmessage = function (event) {
+							try {
+								const data = JSON.parse(event.data) as SignedTx<SignerTx>;
+								if (webSocket.OPEN) {
+									webSocket.close();
+								}
+								resolve([data])
+							} catch {
+								reject('something went wrong');
 							}
-						} catch {
-							badTries += 1;
-						}
-						if (badTries === 3) {
-							return Promise.reject(new Error('timeout'));
-						}
-						await sleep(1000);
+						};
+					
+						webSocket.onclose = function (_event) {
+							reject('timeout');
+						};
+					
+						webSocket.onerror = function (error) {
+							console.log(error);
+							reject('something went wrong');
+						};
 					}
-					return Promise.reject(new Error('timeout'));
+				} catch (ex) {
+					console.log(ex)
+					return reject();
 				}
-			} catch (ex) {
-				console.log(ex)
-				return Promise.reject();
 			}
-		}
+		})
 	}
 }
