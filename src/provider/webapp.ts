@@ -10,6 +10,8 @@ import {
 } from "@waves/signer";
 
 import { v4 as uuidv4} from 'uuid';
+import Cookies from 'js-cookie'
+import { loadConnection } from "../utils/connection";
 
 export class WebAppTelegramProvider implements Provider {
 	public user: UserData | null = null;
@@ -40,43 +42,58 @@ export class WebAppTelegramProvider implements Provider {
 	
 
 	login(): Promise<UserData> {
+		let token = Cookies.get('token');
         return new Promise(async (resolve, reject) => {
-            const token = uuidv4();
-            const queryString = window.btoa(JSON.stringify({
-                method: 'connect_ws',
-                token,
-                networkByte: this.options.NETWORK_BYTE
-            }));
-            const pathname = `?startapp=${queryString}`;
-            const url = `${import.meta.env.VITE_WEB_APP_URL}${pathname}`;
-            const wsUrl = `${import.meta.env.VITE_WS_PROVIDER_URL}/?token=${token}`;
-            const webSocket = new WebSocket(wsUrl);
+			loadConnection(token).then((connection) => {
+				if (connection.status === 'new') {
+					token = connection.token;
+				} else if (connection.status === 'approved' && connection.publicKey !== undefined) {
+					resolve({
+						address: connection.address!,
+						publicKey: connection.publicKey
+					});
+					return;
+				}
 
-            webSocket.onmessage = function (event) {
-                try {
-                    const data = JSON.parse(event.data) as UserData;
-                    if (webSocket.OPEN) {
-                        webSocket.close();
-                    }
-                    resolve({
-                        publicKey: data.publicKey,
-                        address: data.address
-                    });
-                } catch {
-                    reject('something went wrong');
-                }
-            };
+				const queryString = window.btoa(JSON.stringify({
+					method: 'connect_rpc',
+					id: connection._id,
+					networkByte: this.options.NETWORK_BYTE
+				}));
+				const pathname = `?startapp=${queryString}`;
+				const url = `${import.meta.env.VITE_WEB_APP_URL}${pathname}`;
+				const wsUrl = `${import.meta.env.VITE_WS_PROVIDER_URL}/?token=${connection._id}`;
+				const webSocket = new WebSocket(wsUrl);
 
-            webSocket.onclose = function (_event) {
-                reject('timeout');
-            };
-
-            webSocket.onerror = function (error) {
-                console.log(error);
-                reject('something went wrong');
-            };
-
-            window.Telegram.WebApp.openTelegramLink(url);
+				webSocket.onmessage = function (event) {
+					try {
+						const data = JSON.parse(event.data) as UserData;
+						if (webSocket.OPEN) {
+							webSocket.close();
+						}
+						Cookies.set('token', token);
+						resolve({
+							publicKey: data.publicKey,
+							address: data.address
+						});
+					} catch {
+						reject('something went wrong');
+					}
+				};
+	
+				webSocket.onclose = function (_event) {
+					reject('timeout');
+				};
+	
+				webSocket.onerror = function (error) {
+					console.log(error);
+					reject('something went wrong');
+				};
+	
+				window.Telegram.WebApp.openTelegramLink(url);
+			}).catch((ex) => {
+				reject(new Error(ex.message));
+			})
         })
 	}
 
