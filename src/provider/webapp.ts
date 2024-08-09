@@ -12,6 +12,7 @@ import {
 import { v4 as uuidv4} from 'uuid';
 import Cookies from 'js-cookie'
 import { loadConnection } from "../utils/connection";
+import { get, post } from "../utils/http";
 
 export class WebAppTelegramProvider implements Provider {
 	public user: UserData | null = null;
@@ -98,7 +99,11 @@ export class WebAppTelegramProvider implements Provider {
 	}
 
 	async logout(): Promise<void> {
-		throw new Error("Method not implemented.");
+		try {
+			await get('/delete');
+		} catch { }
+		Cookies.remove('token')
+		return Promise.resolve();
 	}
 	//@ts-ignore
 	signMessage(data: string | number): Promise<string> {
@@ -117,40 +122,54 @@ export class WebAppTelegramProvider implements Provider {
 				reject("Only one transaction allowed");
 			} else {
 				try {
-					const token = uuidv4();
-					const tx = window.btoa(JSON.stringify(toSign[0]));
-					const queryString = window.btoa(JSON.stringify({
-                        method: 'sign_tx_ws',
-                        token,
-                        networkByte: this.options.NETWORK_BYTE,
-                        tx
-                    }));
-                    const pathname = `?startapp=${queryString}`;
-                    const url = `${import.meta.env.VITE_WEB_APP_URL}${pathname}`;
-                    const wsUrl = `${import.meta.env.VITE_WS_PROVIDER_URL}/?token=${token}`;
-                    const webSocket = new WebSocket(wsUrl);
-                    webSocket.onmessage = function (event) {
-                        try {
-                            const data = JSON.parse(event.data) as SignedTx<SignerTx>;
-                            if (webSocket.OPEN) {
-                                webSocket.close();
-                            }
-                            resolve([data])
-                        } catch {
-                            reject('something went wrong');
-                        }
-                    };
-                
-                    webSocket.onclose = function (_event) {
-                        reject('timeout');
-                    };
-                
-                    webSocket.onerror = function (error) {
-                        console.log(error);
-                        reject('something went wrong');
-                    };
-
-                    window.Telegram.WebApp.openTelegramLink(url);
+					const token = Cookies.get('token');
+					if (token === undefined) {
+						reject("Please, login first")
+					}
+					
+					const tx = toSign[0];
+					const requested = await post<{ id: string, status: 'success' | 'failed' }>('/transaction/request_sign', {
+						tx: {
+							...tx
+						},
+						networkByte: this.options.NETWORK_BYTE
+					}, token);
+					const { id, status } = requested;
+					if (status === 'success') {
+						const queryString = window.btoa(JSON.stringify({
+							method: 'sign_tx_rpc',
+							token,
+							networkByte: this.options.NETWORK_BYTE
+						}));
+						const pathname = `?startapp=${queryString}`;
+						const url = `${import.meta.env.VITE_WEB_APP_URL}${pathname}`;
+						const wsUrl = `${import.meta.env.VITE_WS_PROVIDER_URL}/?token=${token}`;
+						const webSocket = new WebSocket(wsUrl);
+						webSocket.onmessage = function (event) {
+							try {
+								const data = JSON.parse(event.data) as SignedTx<SignerTx>;
+								if (webSocket.OPEN) {
+									webSocket.close();
+								}
+								resolve([data])
+							} catch {
+								reject('something went wrong');
+							}
+						};
+					
+						webSocket.onclose = function (_event) {
+							reject('timeout');
+						};
+					
+						webSocket.onerror = function (error) {
+							console.log(error);
+							reject('something went wrong');
+						};
+	
+						window.Telegram.WebApp.openTelegramLink(url);
+					} else {
+						reject('unable to send request')
+					}
 				} catch (ex) {
 					console.log(ex)
 					return reject();

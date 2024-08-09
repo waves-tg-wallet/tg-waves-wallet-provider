@@ -123,6 +123,9 @@ export class SiteTelegramProvider implements Provider {
 			} else {
 				try {
 					const token = Cookies.get('token');
+					if (token === undefined) {
+						reject("Please, login first")
+					}
 					const tx = toSign[0];
 					const requested = await post<{ id: string, status: 'success' | 'failed' }>('/transaction/request_sign', {
 						tx: {
