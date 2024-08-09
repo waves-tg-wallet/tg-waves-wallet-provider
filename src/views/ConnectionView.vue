@@ -73,15 +73,19 @@ onMounted(() => {
 
 	webSocket.onmessage = function (event) {
 		try {
-			const data = JSON.parse(event.data) as UserData;
+			const data = JSON.parse(event.data) as UserData & ({status: 'approved' | 'rejected'});
 			if (webSocket.OPEN) {
 				webSocket.close();
 			}
-			Cookies.set('token', props.token);
-			emit('connected', {
-				publicKey: data.publicKey,
-				address: data.address
-			});
+			if (data.status === 'approved') {
+				Cookies.set('token', props.token);
+				emit('connected', {
+					publicKey: data.publicKey,
+					address: data.address
+				});
+			} else {
+				reject(data.status)
+			}
 		} catch {
 			reject('something went wrong');
 		}
@@ -98,7 +102,17 @@ onMounted(() => {
 });
 </script>
 
-<style scoped>
+<style lang="scss" scoped>
+$darkMode: true;
+
+@mixin darkMode {
+	@if($darkMode) {
+		@media(prefers-color-scheme: dark) {
+			@content;
+		}
+	}
+}
+
 #qr {
 	width: 100%;
 	display: flex;
@@ -116,8 +130,30 @@ onMounted(() => {
 	a,
 	a:hover {
 		text-decoration: none;
-		color: var(--link-color);
+		color: hsl(195, 85%, 41%);
 		font-size: 1rem;
 	}
+}
+
+button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+
+    font-size: 0.75em;
+    padding: 0.78em 1.5em 0.78em;
+    border: none;
+    font-weight: 500;
+    border-radius: 0.5em;
+    text-transform: uppercase;
+    background-color: hsl(195, 85%, 41%);
+    color: white;
+}
+
+button:focus,
+button:focus-visible {
+	outline: 4px auto -webkit-focus-ring-color;
 }
 </style>

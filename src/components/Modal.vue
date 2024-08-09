@@ -27,6 +27,16 @@ const props = withDefaults(defineProps<IProps>(), {
 </script>
 
 <style lang="scss" scoped>
+$darkMode: true;
+
+@mixin darkMode {
+	@if($darkMode) {
+		@media(prefers-color-scheme: dark) {
+			@content;
+		}
+	}
+}
+
 .modal--overlay {
 	display: flex;
 	justify-content: center;
@@ -37,7 +47,7 @@ const props = withDefaults(defineProps<IProps>(), {
 	width: 100%;
 	height: 100%;
 	overflow: auto;
-	background-color: rgba(255, 255, 255, 0.2);
+	background-color: rgba(94, 94, 94, 0.5);
 	position: fixed;
 }
 
@@ -46,13 +56,18 @@ const props = withDefaults(defineProps<IProps>(), {
 	background-color: inherit;
 	padding: 20px;
 	width: 80%;
-	background-color: var(--background-color);
-	color: var(--text-color);
+	background-color: hsl(0, 0%, 100%);
+	color: black;
 	height: v-bind('props.height');
 	max-width: v-bind('props.maxWidth');
 	border-radius: 20px;
 	display: flex;
 	flex-direction: column;
+
+	@include darkMode {
+		background-color: #13171f;
+		color: white;
+	}
 
 	.title {
 		display: flex;

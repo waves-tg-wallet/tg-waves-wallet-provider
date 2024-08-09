@@ -99,7 +99,8 @@ export class SiteTelegramProvider implements Provider {
 
 	async logout(): Promise<void> {
 		try {
-			await get('/delete');
+			const token = Cookies.get('token');
+			await get('/connection/delete', token);
 		} catch { }
 		Cookies.remove('token')
 		return Promise.resolve();
@@ -139,11 +140,16 @@ export class SiteTelegramProvider implements Provider {
 						const webSocket = new WebSocket(url);
 						webSocket.onmessage = function (event) {
 							try {
-								const data = JSON.parse(event.data) as SignedTx<SignerTx>;
+								const data = JSON.parse(event.data) as { tx: SignedTx<SignerTx>, status: 'signed' | 'rejected'};
+								console.log('incoming data:', data)
 								if (webSocket.OPEN) {
 									webSocket.close();
 								}
-								resolve([data])
+								if (data.status === 'signed') {
+									resolve([data.tx])
+								} else {
+									reject(status)
+								}
 							} catch {
 								reject('something went wrong');
 							}

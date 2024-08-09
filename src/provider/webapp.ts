@@ -55,10 +55,13 @@ export class WebAppTelegramProvider implements Provider {
 					});
 					return;
 				}
-
+				const title = document.title;
+				const hostname = document.location.hostname;
 				const queryString = window.btoa(JSON.stringify({
 					method: 'connect_rpc',
 					id: connection._id,
+					appName: title.substring(0, 16),
+					appUrl: hostname,
 					networkByte: this.options.NETWORK_BYTE
 				}));
 				const pathname = `?startapp=${queryString}`;
@@ -68,15 +71,19 @@ export class WebAppTelegramProvider implements Provider {
 
 				webSocket.onmessage = function (event) {
 					try {
-						const data = JSON.parse(event.data) as UserData;
+						const data = JSON.parse(event.data) as UserData & ({status: 'approved' | 'rejected'});
 						if (webSocket.OPEN) {
 							webSocket.close();
 						}
-						Cookies.set('token', token);
-						resolve({
-							publicKey: data.publicKey,
-							address: data.address
-						});
+						if (data.status === 'approved') {
+							Cookies.set('token', token);
+							resolve({
+								publicKey: data.publicKey,
+								address: data.address
+							});
+						} else {
+							reject(data.status)
+						}
 					} catch {
 						reject('something went wrong');
 					}
@@ -100,7 +107,8 @@ export class WebAppTelegramProvider implements Provider {
 
 	async logout(): Promise<void> {
 		try {
-			await get('/delete');
+			const token = Cookies.get('token');
+			await get('/connection/delete', token);
 		} catch { }
 		Cookies.remove('token')
 		return Promise.resolve();
@@ -128,7 +136,7 @@ export class WebAppTelegramProvider implements Provider {
 					}
 					
 					const tx = toSign[0];
-					const requested = await post<{ id: string, status: 'success' | 'failed' }>('/transaction/request_sign', {
+					const requested = await post<{ id: string, status: 'success' | 'failed' }>('/transaction/webapp_request_sign', {
 						tx: {
 							...tx
 						},
@@ -138,20 +146,24 @@ export class WebAppTelegramProvider implements Provider {
 					if (status === 'success') {
 						const queryString = window.btoa(JSON.stringify({
 							method: 'sign_tx_rpc',
-							token,
+							id,
 							networkByte: this.options.NETWORK_BYTE
 						}));
 						const pathname = `?startapp=${queryString}`;
 						const url = `${import.meta.env.VITE_WEB_APP_URL}${pathname}`;
-						const wsUrl = `${import.meta.env.VITE_WS_PROVIDER_URL}/?token=${token}`;
+						const wsUrl = `${import.meta.env.VITE_WS_PROVIDER_URL}/?token=${id}`;
 						const webSocket = new WebSocket(wsUrl);
 						webSocket.onmessage = function (event) {
 							try {
-								const data = JSON.parse(event.data) as SignedTx<SignerTx>;
+								const data = JSON.parse(event.data) as { tx: SignedTx<SignerTx>, status: 'signed' | 'rejected'};
 								if (webSocket.OPEN) {
 									webSocket.close();
 								}
-								resolve([data])
+								if (data.status === 'signed') {
+									resolve([data.tx])
+								} else {
+									reject(status)
+								}
 							} catch {
 								reject('something went wrong');
 							}
