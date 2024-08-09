@@ -18,13 +18,13 @@
     "qrcode": "^1.5.3",
     "tslib": "^2.6.3",
     "uuid": "^10.0.0",
-    "vue": "^3.4.31"
+    "vue": "^3.4.31",
+    "sass": "^1.77.8"
   },
   "devDependencies": {
     "@types/js-cookie": "^3.0.6",
     "@vitejs/plugin-vue": "^5.0.5",
     "@waves/waves-transactions": "^4.3.11",
-    "sass": "^1.77.8",
     "typescript": "^5.2.2",
     "vite": "^5.3.4",
     "vue-tsc": "^2.0.24"
