@@ -1,9 +1,19 @@
 {
-  "name": "tg-waves-wallet-provider",
-  "private": true,
-  "version": "0.0.0",
+  "name": "waves-provider-telegram-test2",
+  "version": "1.0.0",
   "type": "module",
-  "main": "src/provider/index.ts",
+  "main": "dist/provider-telegram.cjs.js",
+  "module": "dist/provider-telegram.es.js",
+  "exports": {
+    "." : {
+      "import": "./dist/provider-telegram.es.js",
+      "require": "./dist/provider-telegram.cjs.js"
+    }
+  },
+  "license": "MIT",
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "dev": "vite",
     "build": "vue-tsc -b && vite build",

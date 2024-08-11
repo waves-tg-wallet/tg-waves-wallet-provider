@@ -14,7 +14,7 @@ import Cookies from 'js-cookie'
 import { loadConnection } from "../utils/connection";
 import { get, post } from "../utils/http";
 
-export class WebAppTelegramProvider implements Provider {
+export class WebAppProviderTelegram implements Provider {
 	public user: UserData | null = null;
     //@ts-ignore
 	private options: ConnectOptions = {

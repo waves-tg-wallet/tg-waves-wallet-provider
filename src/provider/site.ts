@@ -16,7 +16,7 @@ import { loadConnection } from "../utils/connection";
 import { get, post } from '../utils/http';
 // import { sleep } from './utils';
 
-export class SiteTelegramProvider implements Provider {
+export class SiteProviderTelegram implements Provider {
 	public user: UserData | null = null;
 	private options: ConnectOptions = {
         NETWORK_BYTE: 'W'.charCodeAt(0),

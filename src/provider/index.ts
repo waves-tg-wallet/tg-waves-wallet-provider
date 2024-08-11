@@ -10,11 +10,11 @@ import {
 } from "@waves/signer";
 
 
-import { WebAppTelegramProvider } from './webapp';
-import { SiteTelegramProvider } from './site';
+import { WebAppProviderTelegram } from './webapp';
+import { SiteProviderTelegram } from './site';
 // import { sleep } from './utils';
 
-export class TelegramProvider implements Provider {
+export class ProviderTelegram implements Provider {
 	public user: UserData | null = null;
 	//@ts-ignore
 	private options: ConnectOptions = {
@@ -29,11 +29,11 @@ export class TelegramProvider implements Provider {
 	{
 		console.log(window.Telegram)
 		if (window.Telegram && window.Telegram.WebApp && window.Telegram.WebApp.initData.length > 0) {
-			console.log('WebAppTelegramProvider')
-			this.selectedProvider = new WebAppTelegramProvider();
+			console.log('WebAppProviderTelegram')
+			this.selectedProvider = new WebAppProviderTelegram();
 		} else {
-			console.log('SiteTelegramProvider')
-			this.selectedProvider = new SiteTelegramProvider();
+			console.log('SiteProviderTelegram')
+			this.selectedProvider = new SiteProviderTelegram();
 		}
 	}
 

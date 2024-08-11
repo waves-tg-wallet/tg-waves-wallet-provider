@@ -10,7 +10,7 @@
 </template>
 
 <script setup lang="ts">
-import { TelegramProvider } from './provider';
+import { ProviderTelegram } from './provider';
 import { transfer, invokeScript } from '@waves/waves-transactions'
 
 // import { ref } from 'vue'
@@ -19,12 +19,12 @@ import { transfer, invokeScript } from '@waves/waves-transactions'
 console.log(import.meta.env)
 
 const test = () => {
-	const provider = new TelegramProvider();
+	const provider = new ProviderTelegram();
 	provider.login()
 }
 
 const test_transfer_tx = () => {
-	const provider = new TelegramProvider();
+	const provider = new ProviderTelegram();
 	//@ts-ignore
 	const ttx = transfer({
 		amount: 1000,
@@ -37,7 +37,7 @@ const test_transfer_tx = () => {
 }
 
 const test_invoke_tx = () => {
-	const provider = new TelegramProvider();
+	const provider = new ProviderTelegram();
 	const itx = invokeScript({
 		"payment": [
 			{
