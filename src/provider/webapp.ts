@@ -9,7 +9,7 @@ import {
 	UserData,
 } from "@waves/signer";
 
-import { v4 as uuidv4} from 'uuid';
+
 import Cookies from 'js-cookie'
 import { loadConnection } from "../utils/connection";
 import { get, post } from "../utils/http";
@@ -76,7 +76,7 @@ export class WebAppProviderTelegram implements Provider {
 							webSocket.close();
 						}
 						if (data.status === 'approved') {
-							Cookies.set('token', token);
+							Cookies.set('token', token!);
 							resolve({
 								publicKey: data.publicKey,
 								address: data.address
