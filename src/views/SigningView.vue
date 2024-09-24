@@ -1,4 +1,4 @@
-<template>
+<!--<template>
 	<Modal :isOpen="isModalOpen" title="Sign tx in your wallet" height="200px">
 		<div style="flex: 1; display: flex; justify-content: center; align-items: center">
 			<div class="loader"></div>
@@ -44,4 +44,4 @@ const reject = () => {
 		font-size: 1rem;
 	}
 }
-</style>
+</style>-->

@@ -13,34 +13,14 @@ import {
 import Cookies from 'js-cookie'
 import { loadConnection } from "../utils/connection";
 import { get, post } from "../utils/http";
+import { IProviderTelegram } from "../types";
 
-export class WebAppProviderTelegram implements Provider {
-	public user: UserData | null = null;
-    //@ts-ignore
-	private options: ConnectOptions = {
-        NETWORK_BYTE: 'W'.charCodeAt(0),
-        NODE_URL: 'https://nodes.wavesplatform.com',
-    };
+export class WebAppProviderTelegram implements IProviderTelegram {
+	options: ConnectOptions;
 
-	isSignAndBroadcastByProvider?: false;
-	//@ts-ignore
-	on<EVENT extends keyof AuthEvents>(event: EVENT, handler: Handler<AuthEvents[EVENT]>): Provider {
-		throw new Error("Method not implemented.");
+	constructor(options: ConnectOptions) {
+		this.options = options;
 	}
-	//@ts-ignore
-	once<EVENT extends keyof AuthEvents>(event: EVENT, handler: Handler<AuthEvents[EVENT]>): Provider {
-		throw new Error("Method not implemented.");
-	}
-	//@ts-ignore
-	off<EVENT extends keyof AuthEvents>(event: EVENT, handler: Handler<AuthEvents[EVENT]>): Provider {
-		throw new Error("Method not implemented.");
-	}
-
-	connect(options: ConnectOptions): Promise<void> {
-        this.options = options;
-		return Promise.resolve();
-	}
-	
 
 	login(): Promise<UserData> {
 		let token = Cookies.get('token');
@@ -105,25 +85,6 @@ export class WebAppProviderTelegram implements Provider {
         })
 	}
 
-	async logout(): Promise<void> {
-		try {
-			const token = Cookies.get('token');
-			await get('/connection/delete', token);
-		} catch { }
-		Cookies.remove('token')
-		return Promise.resolve();
-	}
-	//@ts-ignore
-	signMessage(data: string | number): Promise<string> {
-		throw new Error("Method not implemented.");
-	}
-	//@ts-ignore
-	signTypedData(data: Array<TypedData>): Promise<string> {
-		throw new Error("Method not implemented.");
-	}
-	sign<T extends SignerTx>(toSign: T[]): Promise<SignedTx<T>>;
-	sign<T extends Array<SignerTx>>(toSign: T): Promise<SignedTx<T>>;
-	//@ts-ignore
 	public async sign(toSign: Array<SignerTx>): Promise<Array<SignedTx<SignerTx>>> {
 		return new Promise(async (resolve, reject) => {
 			if (toSign.length > 1) {
@@ -190,3 +151,58 @@ export class WebAppProviderTelegram implements Provider {
 		})
 	}
 }
+
+/*
+
+
+public user: UserData | null = null;
+    //@ts-ignore
+	private options: ConnectOptions = {
+        NETWORK_BYTE: 'W'.charCodeAt(0),
+        NODE_URL: 'https://nodes.wavesplatform.com',
+    };
+
+	isSignAndBroadcastByProvider?: false;
+	//@ts-ignore
+	on<EVENT extends keyof AuthEvents>(event: EVENT, handler: Handler<AuthEvents[EVENT]>): Provider {
+		throw new Error("Method not implemented.");
+	}
+	//@ts-ignore
+	once<EVENT extends keyof AuthEvents>(event: EVENT, handler: Handler<AuthEvents[EVENT]>): Provider {
+		throw new Error("Method not implemented.");
+	}
+	//@ts-ignore
+	off<EVENT extends keyof AuthEvents>(event: EVENT, handler: Handler<AuthEvents[EVENT]>): Provider {
+		throw new Error("Method not implemented.");
+	}
+
+	connect(options: ConnectOptions): Promise<void> {
+        this.options = options;
+		console.log(`WebAppProviderTelegram: ${this.options.NODE_URL}`);
+		return Promise.resolve();
+	}
+	
+
+	
+
+	async logout(): Promise<void> {
+		try {
+			const token = Cookies.get('token');
+			await get('/connection/delete', token);
+		} catch { }
+		Cookies.remove('token')
+		return Promise.resolve();
+	}
+	//@ts-ignore
+	signMessage(data: string | number): Promise<string> {
+		throw new Error("Method not implemented.");
+	}
+	//@ts-ignore
+	signTypedData(data: Array<TypedData>): Promise<string> {
+		throw new Error("Method not implemented.");
+	}
+	sign<T extends SignerTx>(toSign: T[]): Promise<SignedTx<T>>;
+	sign<T extends Array<SignerTx>>(toSign: T): Promise<SignedTx<T>>;
+	//@ts-ignore
+	
+*/

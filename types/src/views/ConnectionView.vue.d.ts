@@ -1,15 +1,28 @@
 import { UserData } from '@waves/signer';
+interface IStyle {
+    maxWidth: string;
+    height: string;
+    lightBgColor: string;
+    darkBgColor: string;
+    lightTextColor: string;
+    darkTextColor: string;
+    lightButtonColor: string;
+    darkButtonColor: string;
+    lightButtonTextColor: string;
+    darkButtonTextColor: string;
+}
 interface IProps {
     id: string;
     token: string;
     networkByte: number;
+    style: IStyle;
 }
 declare const _default: import("vue").DefineComponent<__VLS_TypePropsToOption<IProps>, {}, unknown, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {
     connected: (value: UserData) => void;
     rejected: (value: string) => void;
 }, string, import("vue").PublicProps, Readonly<import("vue").ExtractPropTypes<__VLS_TypePropsToOption<IProps>>> & {
-    onRejected?: ((value: string) => any) | undefined;
     onConnected?: ((value: UserData) => any) | undefined;
+    onRejected?: ((value: string) => any) | undefined;
 }, {}, {}>;
 export default _default;
 

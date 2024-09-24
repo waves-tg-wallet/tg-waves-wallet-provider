@@ -1,16 +1,8 @@
-import { AuthEvents, ConnectOptions, Handler, Provider, SignedTx, SignerTx, TypedData, UserData } from "@waves/signer";
-export declare class WebAppProviderTelegram implements Provider {
-    user: UserData | null;
-    private options;
-    isSignAndBroadcastByProvider?: false;
-    on<EVENT extends keyof AuthEvents>(event: EVENT, handler: Handler<AuthEvents[EVENT]>): Provider;
-    once<EVENT extends keyof AuthEvents>(event: EVENT, handler: Handler<AuthEvents[EVENT]>): Provider;
-    off<EVENT extends keyof AuthEvents>(event: EVENT, handler: Handler<AuthEvents[EVENT]>): Provider;
-    connect(options: ConnectOptions): Promise<void>;
+import { ConnectOptions, SignedTx, SignerTx, UserData } from "@waves/signer";
+import { IProviderTelegram } from "./types";
+export declare class WebAppProviderTelegram implements IProviderTelegram {
+    options: ConnectOptions;
+    constructor(options: ConnectOptions);
     login(): Promise<UserData>;
-    logout(): Promise<void>;
-    signMessage(data: string | number): Promise<string>;
-    signTypedData(data: Array<TypedData>): Promise<string>;
-    sign<T extends SignerTx>(toSign: T[]): Promise<SignedTx<T>>;
-    sign<T extends Array<SignerTx>>(toSign: T): Promise<SignedTx<T>>;
+    sign(toSign: Array<SignerTx>): Promise<Array<SignedTx<SignerTx>>>;
 }

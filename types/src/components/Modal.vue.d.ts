@@ -1,8 +1,19 @@
+interface IStyle {
+    maxWidth: string;
+    height: string;
+    lightBgColor: string;
+    darkBgColor: string;
+    lightTextColor: string;
+    darkTextColor: string;
+    lightButtonColor: string;
+    darkButtonColor: string;
+    lightButtonTextColor: string;
+    darkButtonTextColor: string;
+}
 interface IProps {
     isOpen: boolean;
     title?: string;
-    maxWidth?: string;
-    height?: string;
+    style: IStyle;
 }
 declare function __VLS_template(): {
     default?(_: {}): any;
@@ -10,18 +21,12 @@ declare function __VLS_template(): {
 declare const __VLS_component: import("vue").DefineComponent<__VLS_WithDefaults<__VLS_TypePropsToOption<IProps>, {
     isOpen: boolean;
     title: string;
-    height: string;
-    maxWidth: string;
 }>, {}, unknown, {}, {}, import("vue").ComponentOptionsMixin, import("vue").ComponentOptionsMixin, {}, string, import("vue").PublicProps, Readonly<import("vue").ExtractPropTypes<__VLS_WithDefaults<__VLS_TypePropsToOption<IProps>, {
     isOpen: boolean;
     title: string;
-    height: string;
-    maxWidth: string;
 }>>>, {
     isOpen: boolean;
     title: string;
-    maxWidth: string;
-    height: string;
 }, {}>;
 declare const _default: __VLS_WithTemplateSlots<typeof __VLS_component, ReturnType<typeof __VLS_template>>;
 export default _default;

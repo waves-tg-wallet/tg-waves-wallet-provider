@@ -10,19 +10,20 @@
 </template>
 
 <script setup lang="ts">
+import { IStyle } from '../types';
+
 
 interface IProps {
 	isOpen: boolean;
 	title?: string;
-	maxWidth?: string,
-	height?: string
+	style: IStyle
 }
+
+
 
 const props = withDefaults(defineProps<IProps>(), {
 	isOpen: true,
-	title: '^_^',
-	height: '400px',
-	maxWidth: '300px'
+	title: '^_^'
 });
 </script>
 
@@ -41,7 +42,7 @@ $darkMode: true;
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	z-index: 1;
+	z-index: 900;
 	left: 0;
 	top: 0;
 	width: 100%;
@@ -56,17 +57,17 @@ $darkMode: true;
 	background-color: inherit;
 	padding: 20px;
 	width: 80%;
-	background-color: hsl(0, 0%, 100%);
-	color: black;
-	height: v-bind('props.height');
-	max-width: v-bind('props.maxWidth');
+	background-color: v-bind('props.style.lightBgColor');
+	color: v-bind('props.style.lightTextColor');
+	height: v-bind('props.style.height');
+	max-width: v-bind('props.style.maxWidth');
 	border-radius: 20px;
 	display: flex;
 	flex-direction: column;
 
 	@include darkMode {
-		background-color: #13171f;
-		color: white;
+		background-color: v-bind('props.style.darkBgColor');
+		color: v-bind('props.style.darkTextColor');
 	}
 
 	.title {

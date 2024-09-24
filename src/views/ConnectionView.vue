@@ -1,5 +1,5 @@
 <template>
-	<Modal :isOpen="isModalOpen" title="Connect your wallet">
+	<Modal :isOpen="isModalOpen" title="Connect your wallet" :style="props.style">
 		<div id="qr">
 			<img :src="qrcode" style="width:80%" />
 		</div>
@@ -21,11 +21,13 @@ import { useQRCode } from '@vueuse/integrations/useQRCode'
 import { UserData } from '@waves/signer';
 import Cookies from 'js-cookie'
 import { onMounted } from 'vue';
+import { IStyle } from '../types';
 
 interface IProps {
 	id: string;
 	token: string;
 	networkByte: number;
+	style: IStyle
 }
 
 const props = defineProps<IProps>();
@@ -68,12 +70,13 @@ onMounted(() => {
 	//if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openTelegramLink === 'function') {
 	//	window.Telegram.WebApp.openTelegramLink(url.value);
 	//}
+	console.log(props)
 	const url = `${import.meta.env.VITE_WS_PROVIDER_URL}/?token=${props.id}`;
 	const webSocket = new WebSocket(url);
 
 	webSocket.onmessage = function (event) {
 		try {
-			const data = JSON.parse(event.data) as UserData & ({status: 'approved' | 'rejected'});
+			const data = JSON.parse(event.data) as UserData & ({ status: 'approved' | 'rejected' });
 			if (webSocket.OPEN) {
 				webSocket.close();
 			}
@@ -130,26 +133,36 @@ $darkMode: true;
 	a,
 	a:hover {
 		text-decoration: none;
-		color: hsl(195, 85%, 41%);
+		color: v-bind('props.style.lightButtonColor');
 		font-size: 1rem;
+
+		@include darkMode {
+			color: v-bind('props.style.lightButtonColor');
+		}
 	}
+
 }
 
 button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    position: relative;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	position: relative;
 
-    font-size: 0.75em;
-    padding: 0.78em 1.5em 0.78em;
-    border: none;
-    font-weight: 500;
-    border-radius: 0.5em;
-    text-transform: uppercase;
-    background-color: hsl(195, 85%, 41%);
-    color: white;
+	font-size: 0.75em;
+	padding: 0.78em 1.5em 0.78em;
+	border: none;
+	font-weight: 500;
+	border-radius: 0.5em;
+	text-transform: uppercase;
+	background-color: v-bind('props.style.lightButtonColor');
+	color: v-bind('props.style.lightButtonTextColor');
+
+	@include darkMode {
+		background-color: v-bind('props.style.lightButtonColor');
+		color: v-bind('props.style.darkButtonTextColor');
+	}
 }
 
 button:focus,

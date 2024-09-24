@@ -1,11 +1,7 @@
 import {
-	AuthEvents,
 	ConnectOptions,
-	Handler,
-	Provider,
 	SignedTx,
 	SignerTx,
-	TypedData,
 	UserData,
 } from "@waves/signer";
 
@@ -13,40 +9,40 @@ import Cookies from 'js-cookie'
 import ConnectionView from '../views/ConnectionView.vue'
 import { createApp, h } from "vue";
 import { loadConnection } from "../utils/connection";
-import { get, post } from '../utils/http';
-// import { sleep } from './utils';
+import { post } from '../utils/http';
+import { IProviderTelegram, IStyle } from "../types";
 
-export class SiteProviderTelegram implements Provider {
-	public user: UserData | null = null;
-	private options: ConnectOptions = {
-        NETWORK_BYTE: 'W'.charCodeAt(0),
-        NODE_URL: 'https://nodes.wavesplatform.com',
-    };
+export class SiteProviderTelegram implements IProviderTelegram {
+	options: ConnectOptions;
+	styleParams: IStyle = {
+		maxWidth: '300px',
+		height: '400px',
+		lightBgColor: '#ffffff',
+		darkBgColor: '#13171f',
+		lightTextColor: '#000000',
+		darkTextColor: '#ffffff',
+		lightButtonColor: '#1095c1',
+		darkButtonColor: '#1095c1',
+		lightButtonTextColor: '#fffffff',
+		darkButtonTextColor: '#fffffff'
+	};
 
-	isSignAndBroadcastByProvider?: false;
-	//@ts-ignore
-	on<EVENT extends keyof AuthEvents>(event: EVENT, handler: Handler<AuthEvents[EVENT]>): Provider {
-		throw new Error("Method not implemented.");
-	}
-	//@ts-ignore
-	once<EVENT extends keyof AuthEvents>(event: EVENT, handler: Handler<AuthEvents[EVENT]>): Provider {
-		throw new Error("Method not implemented.");
-	}
-	//@ts-ignore
-	off<EVENT extends keyof AuthEvents>(event: EVENT, handler: Handler<AuthEvents[EVENT]>): Provider {
-		throw new Error("Method not implemented.");
-	}
-
-	connect(options: ConnectOptions): Promise<void> {
+	constructor(options: ConnectOptions, style?: IStyle) {
 		this.options = options;
-		return Promise.resolve();
+		if (style) {
+			this.styleParams = {
+				...this.styleParams,
+				...style
+			};
+		}
+		console.log(this.styleParams)
 	}
-	
 
 	login(): Promise<UserData> {
 		let token = Cookies.get('token');
 		return new Promise((resolve, reject) => {
 			const options = this.options;
+			const styleParams = this.styleParams;
 			loadConnection(token).then((connection) => {
 				if (connection.status === 'new') {
 					token = connection.token;
@@ -79,7 +75,8 @@ export class SiteProviderTelegram implements Provider {
 						const props = {
 							id: connection._id,
 							token: token!,
-							networkByte: options.NETWORK_BYTE
+							networkByte: options.NETWORK_BYTE,
+							style: styleParams
 						}
 
 						return () => h(ConnectionView, {
@@ -93,30 +90,9 @@ export class SiteProviderTelegram implements Provider {
 			}).catch((ex) => {
 				reject(new Error(ex.message));
 			})
-
 		});
 	}
-
-	async logout(): Promise<void> {
-		try {
-			const token = Cookies.get('token');
-			await get('/connection/delete', token);
-		} catch { }
-		Cookies.remove('token')
-		return Promise.resolve();
-	}
-	//@ts-ignore
-	signMessage(data: string | number): Promise<string> {
-		throw new Error("Method not implemented.");
-	}
-	//@ts-ignore
-	signTypedData(data: Array<TypedData>): Promise<string> {
-		throw new Error("Method not implemented.");
-	}
-
-	//sign<T extends SignerTx>(toSign: T[]): Promise<SignedTx<T>>;
-	//sign<T extends Array<SignerTx>>(toSign: T): Promise<SignedTx<T>>;
-    
+	
 	public async sign(toSign: SignerTx[]): Promise<SignedTx<SignerTx[]>> {
 		return new Promise(async (resolve, reject) => {
 			if (toSign.length > 1) {
