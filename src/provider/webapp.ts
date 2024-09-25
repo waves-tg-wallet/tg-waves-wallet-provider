@@ -24,8 +24,9 @@ export class WebAppProviderTelegram implements IProviderTelegram {
 
 	login(): Promise<UserData> {
 		let token = Cookies.get('token');
+		const hostname = document.location.hostname;
         return new Promise(async (resolve, reject) => {
-			loadConnection(token).then((connection) => {
+			loadConnection({ providerType: 'webapp', url: hostname }, token).then((connection) => {
 				if (connection.status === 'new') {
 					token = connection.token;
 				} else if (connection.status === 'approved' && connection.publicKey !== undefined) {
@@ -36,7 +37,6 @@ export class WebAppProviderTelegram implements IProviderTelegram {
 					return;
 				}
 				const title = document.title;
-				const hostname = document.location.hostname;
 				const queryString = window.btoa(JSON.stringify({
 					method: 'connect_rpc',
 					id: connection._id,

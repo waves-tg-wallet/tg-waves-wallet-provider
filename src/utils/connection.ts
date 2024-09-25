@@ -1,4 +1,5 @@
-import { get } from "./http"
+import { TProviderTelegramType } from "../types";
+import { post } from "./http"
 
 export interface IConnectionResponse {
 	_id: string,
@@ -9,9 +10,9 @@ export interface IConnectionResponse {
 	address?: string
 }
 
-export const loadConnection = async (token?: string): Promise<IConnectionResponse> => {
+export const loadConnection = async (body: {providerType: TProviderTelegramType, url: string }, token?: string): Promise<IConnectionResponse> => {
 	try {
-		const connection = await get<IConnectionResponse>('/connection/info', token);
+		const connection = await post<IConnectionResponse>('/connection/info', body, token);
 		return Promise.resolve(connection);
 	} catch {}
 	return Promise.reject()

@@ -151,10 +151,11 @@ button {
 	position: relative;
 
 	font-size: 0.75em;
-	padding: 0.78em 1.5em 0.78em;
+	padding: 17px 28px;
+	gap: 10px;
 	border: none;
 	font-weight: 500;
-	border-radius: 0.5em;
+	border-radius: 16px;
 	text-transform: uppercase;
 	background-color: v-bind('props.style.lightButtonColor');
 	color: v-bind('props.style.lightButtonTextColor');

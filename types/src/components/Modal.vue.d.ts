@@ -1,15 +1,4 @@
-interface IStyle {
-    maxWidth: string;
-    height: string;
-    lightBgColor: string;
-    darkBgColor: string;
-    lightTextColor: string;
-    darkTextColor: string;
-    lightButtonColor: string;
-    darkButtonColor: string;
-    lightButtonTextColor: string;
-    darkButtonTextColor: string;
-}
+import { IStyle } from '../types';
 interface IProps {
     isOpen: boolean;
     title?: string;

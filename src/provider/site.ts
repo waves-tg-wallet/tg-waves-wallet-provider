@@ -18,11 +18,11 @@ export class SiteProviderTelegram implements IProviderTelegram {
 		maxWidth: '300px',
 		height: '400px',
 		lightBgColor: '#ffffff',
-		darkBgColor: '#13171f',
+		darkBgColor: '#202428',
 		lightTextColor: '#000000',
 		darkTextColor: '#ffffff',
-		lightButtonColor: '#1095c1',
-		darkButtonColor: '#1095c1',
+		lightButtonColor: '#177DFF',
+		darkButtonColor: '#177DFF',
 		lightButtonTextColor: '#fffffff',
 		darkButtonTextColor: '#fffffff'
 	};
@@ -43,7 +43,7 @@ export class SiteProviderTelegram implements IProviderTelegram {
 		return new Promise((resolve, reject) => {
 			const options = this.options;
 			const styleParams = this.styleParams;
-			loadConnection(token).then((connection) => {
+			loadConnection({ providerType: 'site', url: document.location.hostname }, token).then((connection) => {
 				if (connection.status === 'new') {
 					token = connection.token;
 				} else if (connection.status === 'approved' && connection.publicKey !== undefined) {

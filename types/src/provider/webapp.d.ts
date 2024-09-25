@@ -1,5 +1,5 @@
 import { ConnectOptions, SignedTx, SignerTx, UserData } from "@waves/signer";
-import { IProviderTelegram } from "./types";
+import { IProviderTelegram } from "../types";
 export declare class WebAppProviderTelegram implements IProviderTelegram {
     options: ConnectOptions;
     constructor(options: ConnectOptions);

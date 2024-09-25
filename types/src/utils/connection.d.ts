@@ -1,3 +1,4 @@
+import { TProviderTelegramType } from "../types";
 export interface IConnectionResponse {
     _id: string;
     token: string;
@@ -6,4 +7,7 @@ export interface IConnectionResponse {
     publicKey?: string;
     address?: string;
 }
-export declare const loadConnection: (token?: string) => Promise<IConnectionResponse>;
+export declare const loadConnection: (body: {
+    providerType: TProviderTelegramType;
+    url: string;
+}, token?: string) => Promise<IConnectionResponse>;
