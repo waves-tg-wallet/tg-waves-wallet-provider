@@ -1,6 +1,6 @@
 {
-	"name": "waves-provider-telegram",
-	"version": "1.0.4",
+	"name": "waves-provider-telegram-test",
+	"version": "1.0.5",
 	"main": "dist/provider-telegram.cjs.js",
 	"module": "dist/provider-telegram.es.js",
 	"types": "./types/src/index.d.ts",

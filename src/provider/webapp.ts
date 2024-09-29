@@ -13,7 +13,7 @@ import {
 import Cookies from 'js-cookie'
 import { loadConnection } from "../utils/connection";
 import { get, post } from "../utils/http";
-import { IProviderTelegram } from "../types";
+import { IProviderTelegram } from ".";
 
 export class WebAppProviderTelegram implements IProviderTelegram {
 	options: ConnectOptions;

@@ -11,7 +11,7 @@
 
 <script setup lang="ts">
 import { computed } from 'vue';
-import { IProviderTelegramConfig } from '../types';
+import { IProviderTelegramConfig } from '../';
 
 
 interface IProps {

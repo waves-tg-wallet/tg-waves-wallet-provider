@@ -21,7 +21,7 @@ import { useQRCode } from '@vueuse/integrations/useQRCode'
 import { UserData } from '@waves/signer';
 import Cookies from 'js-cookie'
 import { onMounted } from 'vue';
-import { IProviderTelegramConfig } from '../types';
+import { IProviderTelegramConfig } from "..";
 
 interface IProps {
 	id: string;

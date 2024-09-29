@@ -1,5 +1,21 @@
 import { ProviderTelegram } from "./provider";
-import { IStyle as StyleOptions } from "./types";
 
 export { ProviderTelegram }
-export type { StyleOptions } 
+
+type TLinkDeliveryMethod = 'qr' | 'message' | 'both'
+
+interface IProviderTelegramConfig {
+	botName: `${string}/${string}`,
+	linkDeliveryMethod: TLinkDeliveryMethod,
+	bgColor: string,
+	textColor: string,
+	buttonColor: string,
+	buttonTextColor: string,
+	darkBgColor: string,
+	darkButtonTextColor: string,
+	darkTextColor: string,
+	darkButtonColor: string,
+	lightDark: boolean
+}
+
+export type { TLinkDeliveryMethod, IProviderTelegramConfig }

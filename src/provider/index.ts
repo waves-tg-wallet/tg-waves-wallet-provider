@@ -13,9 +13,16 @@ import { WebAppProviderTelegram } from "./webapp";
 import { SiteProviderTelegram } from "./site";
 import { get } from "../utils/http";
 import Cookies from 'js-cookie'
-import { IProviderTelegramConfig, TProviderTelegramType } from "../types";
+import { IProviderTelegramConfig } from "../";
 
 
+export type TProviderTelegramType = 'site' | 'webapp'
+
+export interface IProviderTelegram {
+    options: ConnectOptions;
+    login(): Promise<UserData>;
+    sign(toSign: SignerTx[]): Promise<SignedTx<SignerTx[]>>;
+}
 
 
 export class ProviderTelegram implements Provider {

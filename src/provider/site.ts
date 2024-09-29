@@ -10,7 +10,8 @@ import Signer from '../components/Signer.vue'
 import { createApp, h } from "vue";
 import { loadConnection } from "../utils/connection";
 import { post } from '../utils/http';
-import { IProviderTelegram, IProviderTelegramConfig } from "../types";
+import { IProviderTelegram } from ".";
+import { IProviderTelegramConfig } from "../";
 
 export class SiteProviderTelegram implements IProviderTelegram {
 	options: ConnectOptions;
@@ -42,6 +43,7 @@ export class SiteProviderTelegram implements IProviderTelegram {
 					setup() {
 						const handleConnected = (value: UserData & { status: string }) => {
 							if (value.status === 'approved' && value.publicKey) {
+								Cookies.set('token', token!);
 								resolve({
 									address: value.address,
 									publicKey: value.publicKey

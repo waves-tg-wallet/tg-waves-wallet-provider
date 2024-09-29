@@ -1,4 +1,4 @@
-import { TProviderTelegramType } from "../types";
+import { TProviderTelegramType } from "../provider";
 import { post } from "./http"
 
 export interface IConnectionResponse {
