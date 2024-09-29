@@ -13,8 +13,8 @@ import { WebAppProviderTelegram } from "./webapp";
 import { SiteProviderTelegram } from "./site";
 import { get } from "../utils/http";
 import Cookies from 'js-cookie'
-import { IStyle, TProviderTelegramType } from "../types";
-// import { sleep } from './utils';
+import { IProviderTelegramConfig, TProviderTelegramType } from "../types";
+
 
 
 
@@ -27,10 +27,22 @@ export class ProviderTelegram implements Provider {
     };
 
     private selectedProvider: TProviderTelegramType = 'site';
-	private styleParams: IStyle;
+	private providerConfig: IProviderTelegramConfig = {
+		bgColor: '#ffffff',
+		textColor: '#000000',
+		buttonColor: '#177DFF',
+		buttonTextColor: '#fffffff',
+		darkBgColor: '#202428',
+		darkTextColor: '#ffffff',
+		darkButtonColor: '#177DFF',
+		darkButtonTextColor: '#fffffff',
+		botName: 'wallet_waves_bot/wallet',
+		linkDeliveryMethod: 'message',
+		lightDark: true
+	};
 
-    constructor(styleParams: IStyle = {}) {
-		this.styleParams = styleParams;
+    constructor(config: Partial<IProviderTelegramConfig> = {}) {
+		this.providerConfig = {...this.providerConfig, ...config} ;
         const script = document.createElement("script");
         script.type = "text/javascript";
         script.src = "https://telegram.org/js/telegram-web-app.js";
@@ -88,7 +100,7 @@ export class ProviderTelegram implements Provider {
         if (this.selectedProvider === 'webapp') {
 			return new WebAppProviderTelegram(this.options).login();
 		} else {
-			return new SiteProviderTelegram(this.options, this.styleParams).login();
+			return new SiteProviderTelegram(this.options, this.providerConfig).login();
 		}
     }
 
@@ -116,7 +128,7 @@ export class ProviderTelegram implements Provider {
         if (this.selectedProvider === 'webapp') {
 			return new WebAppProviderTelegram(this.options).sign(toSign);
 		} else {
-			return new SiteProviderTelegram(this.options).sign(toSign);
+			return new SiteProviderTelegram(this.options, this.providerConfig).sign(toSign);
 		}
     }
 }

@@ -1,6 +1,7 @@
 import { UserData, ConnectOptions, SignerTx, SignedTx } from "@waves/signer";
 
 export type TProviderTelegramType = 'site' | 'webapp'
+export type TLinkDeliveryMethod = 'qr' | 'message' | 'both'
 
 export interface IProviderTelegram {
     options: ConnectOptions;
@@ -9,15 +10,16 @@ export interface IProviderTelegram {
 }
 
 
-export interface IStyle {
-	maxWidth?: string,
-	height?: string,
-	lightBgColor?: string,
-	darkBgColor?: string,
-	lightTextColor?: string,
-	darkTextColor?: string,
-	lightButtonColor?: string,
-	darkButtonColor?: string,
-	lightButtonTextColor?: string,
-	darkButtonTextColor?: string
+export interface IProviderTelegramConfig {
+	botName: `${string}/${string}`,
+	linkDeliveryMethod: TLinkDeliveryMethod,
+	bgColor: string,
+	textColor: string,
+	buttonColor: string,
+	buttonTextColor: string,
+	darkBgColor: string,
+	darkButtonTextColor: string,
+	darkTextColor: string,
+	darkButtonColor: string,
+	lightDark: boolean
 }

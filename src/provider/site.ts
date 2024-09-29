@@ -6,43 +6,26 @@ import {
 } from "@waves/signer";
 
 import Cookies from 'js-cookie'
-import ConnectionView from '../views/ConnectionView.vue'
+import Signer from '../components/Signer.vue'
 import { createApp, h } from "vue";
 import { loadConnection } from "../utils/connection";
 import { post } from '../utils/http';
-import { IProviderTelegram, IStyle } from "../types";
+import { IProviderTelegram, IProviderTelegramConfig } from "../types";
 
 export class SiteProviderTelegram implements IProviderTelegram {
 	options: ConnectOptions;
-	styleParams: IStyle = {
-		maxWidth: '300px',
-		height: '400px',
-		lightBgColor: '#ffffff',
-		darkBgColor: '#202428',
-		lightTextColor: '#000000',
-		darkTextColor: '#ffffff',
-		lightButtonColor: '#177DFF',
-		darkButtonColor: '#177DFF',
-		lightButtonTextColor: '#fffffff',
-		darkButtonTextColor: '#fffffff'
-	};
+	providerConfig: IProviderTelegramConfig;
 
-	constructor(options: ConnectOptions, style?: IStyle) {
+	constructor(options: ConnectOptions, config: IProviderTelegramConfig) {
 		this.options = options;
-		if (style) {
-			this.styleParams = {
-				...this.styleParams,
-				...style
-			};
-		}
-		console.log(this.styleParams)
+		this.providerConfig = config;
 	}
 
 	login(): Promise<UserData> {
 		let token = Cookies.get('token');
 		return new Promise((resolve, reject) => {
 			const options = this.options;
-			const styleParams = this.styleParams;
+			const config = this.providerConfig;
 			loadConnection({ providerType: 'site', url: document.location.hostname }, token).then((connection) => {
 				if (connection.status === 'new') {
 					token = connection.token;
@@ -57,11 +40,15 @@ export class SiteProviderTelegram implements IProviderTelegram {
 				document.body.appendChild(container);
 				const app = createApp({
 					setup() {
-						const handleConnected = (value: UserData) => {
-							resolve({
-								address: value.address,
-								publicKey: value.publicKey
-							});
+						const handleConnected = (value: UserData & { status: string }) => {
+							if (value.status === 'approved' && value.publicKey) {
+								resolve({
+									address: value.address,
+									publicKey: value.publicKey
+								});
+							} else {
+								reject(new Error('user rejected'))
+							}
 							app.unmount();
 							document.body.removeChild(container);
 						}
@@ -72,14 +59,24 @@ export class SiteProviderTelegram implements IProviderTelegram {
 							document.body.removeChild(container);
 						}
 
+						const title = document.title;
+						const hostname = document.location.hostname;
+						const signerData = {
+							method: 'connect_rpc',
+							id: connection._id,
+							appName: title.substring(0, 16),
+							appUrl: hostname,
+							networkByte: options.NETWORK_BYTE
+						};
+
 						const props = {
 							id: connection._id,
-							token: token!,
-							networkByte: options.NETWORK_BYTE,
-							style: styleParams
+							config: config,
+							title: "Connect your wallet",
+							signerData
 						}
 
-						return () => h(ConnectionView, {
+						return () => h(Signer, {
 							...props,
 							onConnected: handleConnected,
 							onRejected: handleRejected
@@ -95,6 +92,8 @@ export class SiteProviderTelegram implements IProviderTelegram {
 	
 	public async sign(toSign: SignerTx[]): Promise<SignedTx<SignerTx[]>> {
 		return new Promise(async (resolve, reject) => {
+			const config = this.providerConfig;
+			const options = this.options;
 			if (toSign.length > 1) {
 				reject("Only one transaction allowed");
 			} else {
@@ -103,42 +102,87 @@ export class SiteProviderTelegram implements IProviderTelegram {
 					if (token === undefined) {
 						reject("Please, login first")
 					}
+					const withMessage = config.linkDeliveryMethod === 'message' || config.linkDeliveryMethod === 'both';
 					const tx = toSign[0];
-					const requested = await post<{ id: string, status: 'success' | 'failed' }>('/transaction/request_sign', {
+					const requested = await post<{ id: string, status: 'success' | 'failed' }>('/transaction/signing_request', {
 						tx: {
 							...tx
 						},
-						networkByte: this.options.NETWORK_BYTE
+						networkByte: this.options.NETWORK_BYTE,
+						withMessage
 					}, token);
 					const { id, status } = requested;
 					if (status && status === 'success') {
-						const url = `${import.meta.env.VITE_WS_PROVIDER_URL}/?token=${id}`;
-						const webSocket = new WebSocket(url);
-						webSocket.onmessage = function (event) {
-							try {
-								const data = JSON.parse(event.data) as { tx: SignedTx<SignerTx>, status: 'signed' | 'rejected'};
-								console.log('incoming data:', data)
-								if (webSocket.OPEN) {
-									webSocket.close();
+						if (config.linkDeliveryMethod === 'message') {
+							const url = `${import.meta.env.VITE_WS_PROVIDER_URL}/?token=${id}`;
+							const webSocket = new WebSocket(url);
+							webSocket.onmessage = function (event) {
+								try {
+									const data = JSON.parse(event.data) as { tx: SignedTx<SignerTx>, status: 'signed' | 'rejected'};
+									if (webSocket.OPEN) {
+										webSocket.close();
+									}
+									if (data.status === 'signed') {
+										resolve([data.tx])
+									} else {
+										reject(status)
+									}
+								} catch {
+									reject('something went wrong');
 								}
-								if (data.status === 'signed') {
-									resolve([data.tx])
-								} else {
-									reject(status)
-								}
-							} catch {
+							};
+						
+							webSocket.onclose = function (_event) {
+								reject('timeout');
+							};
+						
+							webSocket.onerror = function (error) {
+								console.log(error);
 								reject('something went wrong');
-							}
-						};
-					
-						webSocket.onclose = function (_event) {
-							reject('timeout');
-						};
-					
-						webSocket.onerror = function (error) {
-							console.log(error);
-							reject('something went wrong');
-						};
+							};
+						} else {
+							const container = document.createElement('div');
+							document.body.appendChild(container);
+							const app = createApp({
+								setup() {
+									const handleConnected = (value: { tx: SignedTx<SignerTx>, status: 'signed' | 'rejected'}) => {
+										if (value.status === 'signed') {
+											resolve([value.tx])
+										} else {
+											reject(new Error('user rejected'))
+										}
+										app.unmount();
+										document.body.removeChild(container);
+									}
+			
+									const handleRejected = (value: string) => {
+										reject(new Error(value))
+										app.unmount();
+										document.body.removeChild(container);
+									}
+
+									const signerData = {
+										method: 'sign_tx_rpc',
+										id,
+										networkByte: options.NETWORK_BYTE
+									};
+
+									const props = {
+										id: id,
+										config: config,
+										title: "Sign transaction",
+										signerData
+									}
+
+									return () => h(Signer, {
+										...props,
+										onConnected: handleConnected,
+										onRejected: handleRejected
+									});
+								}
+							});
+							app.mount(container);
+						}
 					}
 				} catch (ex) {
 					console.log(ex)

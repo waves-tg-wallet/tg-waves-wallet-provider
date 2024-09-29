@@ -18,31 +18,24 @@ import { ref, computed } from 'vue';
 import Modal from '../components/Modal.vue';
 //@ts-ignore
 import { useQRCode } from '@vueuse/integrations/useQRCode'
-import { UserData } from '@waves/signer';
-import Cookies from 'js-cookie'
 import { onMounted } from 'vue';
 import { IProviderTelegramConfig } from '../types';
 
 interface IProps {
 	id: string;
-	token: string;
-	networkByte: number;
-	config: IProviderTelegramConfig
+	config: IProviderTelegramConfig,
+	signerData?: any,
+	title?: string
 }
 
-const props = defineProps<IProps>();
+const props = withDefaults(defineProps<IProps>(), {
+	signerData: {},
+	title: "Signer"
+});
 
-const title = document.title;
-const hostname = document.location.hostname;
-const queryString = window.btoa(JSON.stringify({
-	method: 'connect_rpc',
-	id: props.id,
-	appName: title.substring(0, 16),
-	appUrl: hostname,
-	networkByte: props.networkByte
-}));
+const queryString = window.btoa(JSON.stringify(props.signerData));
 const pathname = `?startapp=${queryString}`;
-const url = computed<string>(() => `${import.meta.env.VITE_WEB_APP_URL}${pathname}`);
+const url = computed<string>(() => `https://t.me/${props.config.botName}${pathname}`);
 
 const qrcode = useQRCode(url, {
 	margin: 1,
@@ -56,7 +49,7 @@ const isModalOpen = ref(true);
 let intervalId: any;
 
 const emit = defineEmits<{
-	(e: 'connected', value: UserData): void;
+	(e: 'connected', value: any): void;
 	(e: 'rejected', value: string): void;
 }>();
 
@@ -67,27 +60,19 @@ const reject = (message: string) => {
 };
 
 onMounted(() => {
-	//if (window.Telegram && window.Telegram.WebApp && typeof window.Telegram.WebApp.openTelegramLink === 'function') {
-	//	window.Telegram.WebApp.openTelegramLink(url.value);
-	//}
-	console.log(props)
 	const url = `${import.meta.env.VITE_WS_PROVIDER_URL}/?token=${props.id}`;
 	const webSocket = new WebSocket(url);
 
 	webSocket.onmessage = function (event) {
 		try {
-			const data = JSON.parse(event.data) as UserData & ({ status: 'approved' | 'rejected' });
+			const data = JSON.parse(event.data) as ({ status: string });
 			if (webSocket.OPEN) {
 				webSocket.close();
 			}
-			if (data.status === 'approved') {
-				Cookies.set('token', props.token);
-				emit('connected', {
-					publicKey: data.publicKey,
-					address: data.address
-				});
+			if (data.status) {
+				emit('connected', data);
 			} else {
-				reject(data.status)
+				reject('invalid response')
 			}
 		} catch {
 			reject('something went wrong');
@@ -103,6 +88,10 @@ onMounted(() => {
 		reject('something went wrong');
 	};
 });
+
+const darkButtonColor = computed(() => props.config.buttonColor);
+const darkButtonTextColor = computed(() => props.config.lightDark ? props.config.darkButtonTextColor : props.config.buttonTextColor);
+
 </script>
 
 <style lang="scss" scoped>
@@ -137,7 +126,7 @@ $darkMode: true;
 		font-size: 1rem;
 
 		@include darkMode {
-			color: v-bind('props.config.buttonColor');
+			color: v-bind('darkButtonColor');
 		}
 	}
 
@@ -161,8 +150,8 @@ button {
 	color: v-bind('props.config.buttonTextColor');
 
 	@include darkMode {
-		background-color: v-bind('props.config.buttonColor');
-		color: v-bind('props.config.darkButtonTextColor');
+		background-color: v-bind('darkButtonColor');
+		color: v-bind('darkButtonTextColor');
 	}
 }
 

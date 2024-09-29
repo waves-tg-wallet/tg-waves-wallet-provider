@@ -10,21 +10,23 @@
 </template>
 
 <script setup lang="ts">
-import { IStyle } from '../types';
+import { computed } from 'vue';
+import { IProviderTelegramConfig } from '../types';
 
 
 interface IProps {
 	isOpen: boolean;
-	title?: string;
-	style: IStyle
+	title: string;
+	config: IProviderTelegramConfig
 }
 
-
-
 const props = withDefaults(defineProps<IProps>(), {
-	isOpen: true,
-	title: '^_^'
+	isOpen: true
 });
+
+const darkBgColor = computed(() => props.config.lightDark ? props.config.darkBgColor : props.config.bgColor);
+const darkTextColor = computed(() => props.config.lightDark ? props.config.darkTextColor : props.config.textColor);
+
 </script>
 
 <style lang="scss" scoped>
@@ -57,17 +59,17 @@ $darkMode: true;
 	background-color: inherit;
 	padding: 20px;
 	width: 80%;
-	background-color: v-bind('props.style.lightBgColor');
-	color: v-bind('props.style.lightTextColor');
-	height: v-bind('props.style.height');
-	max-width: v-bind('props.style.maxWidth');
+	background-color: v-bind('props.config.bgColor');
+	color: v-bind('props.config.textColor');
+	height: 400px;
+	max-width: 300px;
 	border-radius: 20px;
 	display: flex;
 	flex-direction: column;
 
 	@include darkMode {
-		background-color: v-bind('props.style.darkBgColor');
-		color: v-bind('props.style.darkTextColor');
+		background-color: v-bind('darkBgColor');
+		color: v-bind('darkTextColor');
 	}
 
 	.title {
