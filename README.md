@@ -43,6 +43,26 @@ Add library initialization to your app.
   signer.setProvider(provider);
   ```
 
+### Constructor
+```js
+const telegramProvider = new ProviderTelegram([config]);
+```
+
+Config parameters:
+|Key|Type|Description|Default|
+|-|-|-|-|
+|linkDeliveryMethod|`string`|Method of link delivery. Available: `message`, `qr`, `both`|`'message'`|
+|bgColor|`string`|Background color in light mode|`'#ffffff'`|
+|textColor|`string`|Text color in light mode|`'#000000'`|
+|buttonColor|`string`|Button color in light mode|`'#177DFF'`|
+|buttonTextColor|`string`|Button text color in light mode|`'#ffffff'`|
+|darkBgColor|`string`|Background color in dark mode|`'#202428'`|
+|darkTextColor|`string`|Text color in dark mode|`'#ffffff'`|
+|darkButtonColor|`string`|Button color in dark mode|`'#177DFF'`|
+|darkButtonTextColor|`string`|Button text color in dark mode|`'#ffffff'`|
+|lightDark|`boolean`|Light and dark mode|`true`|
+
+
 ### Basic example
 
 Now your application is ready to work with Waves Platform. Let's test it by implementing basic functionality.

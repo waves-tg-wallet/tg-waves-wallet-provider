@@ -49,7 +49,7 @@ export class ProviderTelegram implements Provider {
 	};
 
     constructor(config: Partial<IProviderTelegramConfig> = {}) {
-		this.providerConfig = {...this.providerConfig, ...config} ;
+		this.providerConfig = {...this.providerConfig, ...config};
         const script = document.createElement("script");
         script.type = "text/javascript";
         script.src = "https://telegram.org/js/telegram-web-app.js";
