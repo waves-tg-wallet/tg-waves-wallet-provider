@@ -14,6 +14,7 @@ import { SiteProviderTelegram } from "./site";
 import { get } from "../utils/http";
 import Cookies from 'js-cookie'
 import { IProviderTelegramConfig } from "../";
+import { loadConnection } from "../utils/connection";
 
 
 export type TProviderTelegramType = 'site' | 'webapp'
@@ -137,5 +138,28 @@ export class ProviderTelegram implements Provider {
 		} else {
 			return new SiteProviderTelegram(this.options, this.providerConfig).sign(toSign);
 		}
+    }
+
+    public isAlive(): Promise<UserData> {
+        return new Promise(async (resolve) => {
+            try {
+                const token = Cookies.get('token');
+                if (token) {
+                    const body: {providerType: TProviderTelegramType, url: string } = {
+                        providerType: this.selectedProvider,
+                        url: document.location.hostname
+                    }
+                    const resp = await loadConnection(body, token);
+                    if (resp.status === 'approved' && resp.publicKey !== undefined) {
+                        resolve({
+                            address: resp.address!,
+                            publicKey: resp.publicKey
+                        });
+                    }
+                }
+            } catch (ex) {
+                console.log(ex)
+            }
+        });
     }
 }
