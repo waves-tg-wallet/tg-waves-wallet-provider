@@ -25,9 +25,9 @@ export interface IProviderTelegram {
     sign(toSign: SignerTx[]): Promise<SignedTx<SignerTx[]>>;
 }
 
-
-export class ProviderTelegram implements Provider {
+export class ProviderTelegram extends EventTarget implements Provider {
     public user: UserData | null = null;
+    private eventTarget = new EventTarget();
 
     private options: ConnectOptions = {
         NETWORK_BYTE: "W".charCodeAt(0),
@@ -44,38 +44,56 @@ export class ProviderTelegram implements Provider {
 		darkTextColor: '#ffffff',
 		darkButtonColor: '#177DFF',
 		darkButtonTextColor: '#fffffff',
-		botName: 'wallet_waves_bot/wallet',
+		botName: 'aurawallet_bot/wallet',
 		linkDeliveryMethod: 'message',
 		lightDark: true
 	};
 
     constructor(config: Partial<IProviderTelegramConfig> = {}) {
+        super();
 		this.providerConfig = {...this.providerConfig, ...config};
         const script = document.createElement("script");
         script.type = "text/javascript";
         script.src = "https://telegram.org/js/telegram-web-app.js";
         script.onload = () => {
             console.log("telegram loaded successfuly");
-            if (
-                window.Telegram &&
-                window.Telegram.WebApp &&
-                window.Telegram.WebApp.initData.length > 0
-            ) {
+            if ((window.Telegram && window.Telegram.WebApp.initData.length > 0)) {
                 console.log("WebAppProviderTelegram");
-                this.selectedProvider = 'webapp'
+                this.selectedProvider = 'webapp';
+                this.eventTarget.dispatchEvent(new CustomEvent('injected', { detail: 'webapp' }));
             } else {
                 console.log("SiteProviderTelegram");
-                this.selectedProvider = 'site'
+                this.selectedProvider = 'site';
+                this.eventTarget.dispatchEvent(new CustomEvent('injected', { detail: 'site' }));
             }
         };
         script.onerror = () => {
             console.log("Error occurred while loading telegram");
-            this.selectedProvider = 'webapp'
+            this.selectedProvider = 'site'
+            this.eventTarget.dispatchEvent(new CustomEvent('injected', { detail: 'site' }));
         };
         document.body.appendChild(script);
     }
 
     isSignAndBroadcastByProvider?: false;
+
+
+    onLoad(event: 'injected', handler: (type: TProviderTelegramType) => void) {
+        const wrappedHandler: EventListener = (e: Event) => {
+            const customEvent = e as CustomEvent; // Приведение типа события к CustomEvent
+            handler(customEvent.detail); // Вызов оригинального обработчика с переданным параметром
+            this.eventTarget.removeEventListener(event, wrappedHandler); // Удаление обработчика после первого вызова
+        };
+        this.eventTarget.addEventListener(event, wrappedHandler);
+    }
+
+    once<EVENT extends keyof AuthEvents> (
+        event: EVENT,
+        handler: Handler<AuthEvents[EVENT]>
+    ): this {
+        throw new Error("Method not implemented.");
+    }
+
     //@ts-ignore
     on<EVENT extends keyof AuthEvents>(
         event: EVENT,
@@ -84,12 +102,12 @@ export class ProviderTelegram implements Provider {
         throw new Error("Method not implemented.");
     }
     //@ts-ignore
-    once<EVENT extends keyof AuthEvents>(
-        event: EVENT,
-        handler: Handler<AuthEvents[EVENT]>
-    ): Provider {
-        throw new Error("Method not implemented.");
-    }
+    //once<EVENT extends keyof AuthEvents>(
+    //    event: EVENT,
+    //    handler: Handler<AuthEvents[EVENT]>
+    //): Provider {
+    //    throw new Error("Method not implemented.");
+    //}
     //@ts-ignore
     off<EVENT extends keyof AuthEvents>(
         event: EVENT,
@@ -106,7 +124,7 @@ export class ProviderTelegram implements Provider {
 
     login(): Promise<UserData> {
         if (this.selectedProvider === 'webapp') {
-			return new WebAppProviderTelegram(this.options).login();
+			return new WebAppProviderTelegram(this.options, this.providerConfig).login();
 		} else {
 			return new SiteProviderTelegram(this.options, this.providerConfig).login();
 		}
@@ -134,7 +152,7 @@ export class ProviderTelegram implements Provider {
     public async sign(toSign: SignerTx[]): Promise<SignedTx<SignerTx[]>> {
         //@ts-ignore
         if (this.selectedProvider === 'webapp') {
-			return new WebAppProviderTelegram(this.options).sign(toSign);
+			return new WebAppProviderTelegram(this.options, this.providerConfig).sign(toSign);
 		} else {
 			return new SiteProviderTelegram(this.options, this.providerConfig).sign(toSign);
 		}

@@ -43,7 +43,7 @@ export class SiteProviderTelegram implements IProviderTelegram {
 					setup() {
 						const handleConnected = (value: UserData & { status: string }) => {
 							if (value.status === 'approved' && value.publicKey) {
-								Cookies.set('token', token!);
+								Cookies.set('token', token!, { expires: 30 });
 								resolve({
 									address: value.address,
 									publicKey: value.publicKey

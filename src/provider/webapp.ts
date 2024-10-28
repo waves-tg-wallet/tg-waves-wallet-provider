@@ -14,16 +14,20 @@ import Cookies from 'js-cookie'
 import { loadConnection } from "../utils/connection";
 import { get, post } from "../utils/http";
 import { IProviderTelegram } from ".";
+import { IProviderTelegramConfig } from "..";
 
 export class WebAppProviderTelegram implements IProviderTelegram {
 	options: ConnectOptions;
+	providerConfig: IProviderTelegramConfig;
 
-	constructor(options: ConnectOptions) {
+	constructor(options: ConnectOptions, config: IProviderTelegramConfig) {
 		this.options = options;
+		this.providerConfig = config;
 	}
 
 	login(): Promise<UserData> {
 		let token = Cookies.get('token');
+		const config = this.providerConfig;
 		const hostname = document.location.hostname;
         return new Promise(async (resolve, reject) => {
 			loadConnection({ providerType: 'webapp', url: hostname }, token).then((connection) => {
@@ -45,7 +49,7 @@ export class WebAppProviderTelegram implements IProviderTelegram {
 					networkByte: this.options.NETWORK_BYTE
 				}));
 				const pathname = `?startapp=${queryString}`;
-				const url = `${import.meta.env.VITE_WEB_APP_URL}${pathname}`;
+				const url = `https://t.me/${config.botName}${pathname}`;
 				const wsUrl = `${import.meta.env.VITE_WS_PROVIDER_URL}/?token=${connection._id}`;
 				const webSocket = new WebSocket(wsUrl);
 
@@ -56,7 +60,7 @@ export class WebAppProviderTelegram implements IProviderTelegram {
 							webSocket.close();
 						}
 						if (data.status === 'approved') {
-							Cookies.set('token', token!);
+							Cookies.set('token', token!, { expires: 30 });
 							resolve({
 								publicKey: data.publicKey,
 								address: data.address
@@ -91,6 +95,7 @@ export class WebAppProviderTelegram implements IProviderTelegram {
 				reject("Only one transaction allowed");
 			} else {
 				try {
+					const config = this.providerConfig;
 					const token = Cookies.get('token');
 					if (token === undefined) {
 						reject("Please, login first")
@@ -111,7 +116,7 @@ export class WebAppProviderTelegram implements IProviderTelegram {
 							networkByte: this.options.NETWORK_BYTE
 						}));
 						const pathname = `?startapp=${queryString}`;
-						const url = `${import.meta.env.VITE_WEB_APP_URL}${pathname}`;
+						const url = `https://t.me/${config.botName}${pathname}`;
 						const wsUrl = `${import.meta.env.VITE_WS_PROVIDER_URL}/?token=${id}`;
 						const webSocket = new WebSocket(wsUrl);
 						webSocket.onmessage = function (event) {
