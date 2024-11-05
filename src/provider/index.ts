@@ -11,15 +11,17 @@ import {
 
 import { WebAppProviderTelegram } from "./webapp";
 import { SiteProviderTelegram } from "./site";
+import { FrameProviderTelegram } from "./iframe";
 import { get } from "../utils/http";
 import Cookies from 'js-cookie'
-import { IProviderTelegramConfig } from "../";
+import { IProviderTelegramConfig, TProviderTelegramType } from "../";
 import { loadConnection } from "../utils/connection";
 
 
-export type TProviderTelegramType = 'site' | 'webapp'
+
 
 export interface IProviderTelegram {
+    type: TProviderTelegramType;
     options: ConnectOptions;
     login(): Promise<UserData>;
     sign(toSign: SignerTx[]): Promise<SignedTx<SignerTx[]>>;
@@ -34,7 +36,7 @@ export class ProviderTelegram extends EventTarget implements Provider {
         NODE_URL: "https://nodes.wavesplatform.com",
     };
 
-    private selectedProvider: TProviderTelegramType = 'site';
+    private selectedProvider?: IProviderTelegram;
 	private providerConfig: IProviderTelegramConfig = {
 		bgColor: '#ffffff',
 		textColor: '#000000',
@@ -52,28 +54,36 @@ export class ProviderTelegram extends EventTarget implements Provider {
     constructor(config: Partial<IProviderTelegramConfig> = {}) {
         super();
 		this.providerConfig = {...this.providerConfig, ...config};
-        const script = document.createElement("script");
-        script.type = "text/javascript";
-        script.src = "https://telegram.org/js/telegram-web-app.js";
-        script.onload = () => {
-            console.log("telegram loaded successfuly");
-            if ((window.Telegram && window.Telegram.WebApp.initData.length > 0)) {
-                console.log("WebAppProviderTelegram");
-                this.selectedProvider = 'webapp';
-                this.eventTarget.dispatchEvent(new CustomEvent('injected', { detail: 'webapp' }));
-            } else {
-                console.log("SiteProviderTelegram");
-                this.selectedProvider = 'site';
-                this.eventTarget.dispatchEvent(new CustomEvent('injected', { detail: 'site' }));
+        const searchParams = new URL(document.location.href).searchParams
+        const source = searchParams.get('utm_source');
+        const address = searchParams.get('address');
+        const publicKey = searchParams.get('public_key');
+        if (source === 'aura' && address && publicKey) {
+            this.selectedProvider = new FrameProviderTelegram({address, publicKey}, this.options, this.providerConfig);
+            this.eventTarget.dispatchEvent(new CustomEvent('injected', { detail: 'iframe' }));
+        } else {
+            const script = document.createElement("script");
+            script.type = "text/javascript";
+            script.src = "https://telegram.org/js/telegram-web-app.js";
+            script.onload = () => {
+                if ((window.Telegram && window.Telegram.WebApp.initData.length > 0)) {
+                    console.log("WebAppProviderTelegram");
+                    this.selectedProvider = new WebAppProviderTelegram(this.options, this.providerConfig);//'webapp';
+                    this.eventTarget.dispatchEvent(new CustomEvent('injected', { detail: 'webapp' }));
+                } else {
+                    console.log("SiteProviderTelegram");
+                    this.selectedProvider = new SiteProviderTelegram(this.options, this.providerConfig);//'site';
+                    this.eventTarget.dispatchEvent(new CustomEvent('injected', { detail: 'site' }));
+                }
             }
-        };
-        script.onerror = () => {
-            console.log("Error occurred while loading telegram");
-            this.selectedProvider = 'site'
-            this.eventTarget.dispatchEvent(new CustomEvent('injected', { detail: 'site' }));
-        };
-        document.body.appendChild(script);
-    }
+            script.onerror = () => {
+                console.log("Error occurred while loading telegram");
+                this.selectedProvider = new SiteProviderTelegram(this.options, this.providerConfig);//'site';
+                this.eventTarget.dispatchEvent(new CustomEvent('injected', { detail: 'site' }));
+            };
+            document.body.appendChild(script);
+        }
+    }; 
 
     isSignAndBroadcastByProvider?: false;
 
@@ -123,19 +133,15 @@ export class ProviderTelegram extends EventTarget implements Provider {
     }
 
     login(): Promise<UserData> {
-        if (this.selectedProvider === 'webapp') {
-			return new WebAppProviderTelegram(this.options, this.providerConfig).login();
-		} else {
-			return new SiteProviderTelegram(this.options, this.providerConfig).login();
-		}
+        return this.selectedProvider!.login();
     }
 
     async logout(): Promise<void> {
         try {
 			const token = Cookies.get('token');
+            Cookies.remove('token')
 			await get('/connection/delete', token);
 		} catch { }
-		Cookies.remove('token')
 		return Promise.resolve();
     }
     //@ts-ignore
@@ -151,32 +157,32 @@ export class ProviderTelegram extends EventTarget implements Provider {
 
     public async sign(toSign: SignerTx[]): Promise<SignedTx<SignerTx[]>> {
         //@ts-ignore
-        if (this.selectedProvider === 'webapp') {
-			return new WebAppProviderTelegram(this.options, this.providerConfig).sign(toSign);
-		} else {
-			return new SiteProviderTelegram(this.options, this.providerConfig).sign(toSign);
-		}
+        return this.selectedProvider.sign(toSign);
     }
 
     public isAlive(): Promise<UserData> {
         return new Promise(async (resolve) => {
-            try {
-                const token = Cookies.get('token');
-                if (token) {
-                    const body: {providerType: TProviderTelegramType, url: string } = {
-                        providerType: this.selectedProvider,
-                        url: document.location.hostname
+            if (this.selectedProvider!.type === 'iframe') {
+                resolve((this.selectedProvider as FrameProviderTelegram).user);
+            } else {
+                try {
+                    const token = Cookies.get('token');
+                    if (token) {
+                        const body: {providerType: TProviderTelegramType, url: string } = {
+                            providerType: this.selectedProvider!.type,
+                            url: document.location.hostname
+                        }
+                        const resp = await loadConnection(body, token);
+                        if (resp.status === 'approved' && resp.publicKey !== undefined) {
+                            resolve({
+                                address: resp.address!,
+                                publicKey: resp.publicKey
+                            });
+                        }
                     }
-                    const resp = await loadConnection(body, token);
-                    if (resp.status === 'approved' && resp.publicKey !== undefined) {
-                        resolve({
-                            address: resp.address!,
-                            publicKey: resp.publicKey
-                        });
-                    }
+                } catch (ex) {
+                    console.log(ex)
                 }
-            } catch (ex) {
-                console.log(ex)
             }
         });
     }

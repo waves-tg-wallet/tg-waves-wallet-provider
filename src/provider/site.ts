@@ -11,9 +11,10 @@ import { createApp, h } from "vue";
 import { loadConnection } from "../utils/connection";
 import { post } from '../utils/http';
 import { IProviderTelegram } from ".";
-import { IProviderTelegramConfig } from "../";
+import { IProviderTelegramConfig, TProviderTelegramType } from "../";
 
 export class SiteProviderTelegram implements IProviderTelegram {
+	type: TProviderTelegramType = 'site';
 	options: ConnectOptions;
 	providerConfig: IProviderTelegramConfig;
 

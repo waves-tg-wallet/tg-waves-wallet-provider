@@ -14,9 +14,10 @@ import Cookies from 'js-cookie'
 import { loadConnection } from "../utils/connection";
 import { get, post } from "../utils/http";
 import { IProviderTelegram } from ".";
-import { IProviderTelegramConfig } from "..";
+import { IProviderTelegramConfig, TProviderTelegramType } from "..";
 
 export class WebAppProviderTelegram implements IProviderTelegram {
+	type: TProviderTelegramType = 'webapp';
 	options: ConnectOptions;
 	providerConfig: IProviderTelegramConfig;
 
