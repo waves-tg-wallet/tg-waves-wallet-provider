@@ -3,7 +3,7 @@ import { ProviderTelegram } from "./provider";
 export { ProviderTelegram }
 
 type TLinkDeliveryMethod = 'qr' | 'message' | 'both'
-type TProviderTelegramType = 'site' | 'webapp' | 'iframe'
+type TProviderTelegramType = 'site' | 'webapp'
 
 interface IProviderTelegramConfig {
 	botName: `${string}/${string}`,
