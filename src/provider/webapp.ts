@@ -67,20 +67,20 @@ export class WebAppProviderTelegram implements IProviderTelegram {
 								address: data.address
 							});
 						} else {
-							reject(data.status)
+							reject(new Error(data.status));
 						}
 					} catch {
-						reject('something went wrong');
+						reject(new Error('something went wrong'));
 					}
 				};
 	
 				webSocket.onclose = function (_event) {
-					reject('timeout');
+					reject(new Error('timeout'));
 				};
 	
 				webSocket.onerror = function (error) {
 					console.log(error);
-					reject('something went wrong');
+					reject(new Error('something went wrong'));
 				};
 	
 				window.Telegram.WebApp.openTelegramLink(url);

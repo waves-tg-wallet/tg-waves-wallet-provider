@@ -66,6 +66,7 @@ export class ProviderTelegram extends EventTarget implements Provider {
             script.type = "text/javascript";
             script.src = "https://telegram.org/js/telegram-web-app.js";
             script.onload = () => {
+                console.log('check webapp', window.Telegram.WebApp.initData)
                 if ((window.Telegram && window.Telegram.WebApp.initData.length > 0)) {
                     console.log("WebAppProviderTelegram");
                     this.selectedProvider = new WebAppProviderTelegram(this.options, this.providerConfig);//'webapp';
@@ -111,14 +112,7 @@ export class ProviderTelegram extends EventTarget implements Provider {
     ): Provider {
         throw new Error("Method not implemented.");
     }
-    //@ts-ignore
-    //once<EVENT extends keyof AuthEvents>(
-    //    event: EVENT,
-    //    handler: Handler<AuthEvents[EVENT]>
-    //): Provider {
-    //    throw new Error("Method not implemented.");
-    //}
-    //@ts-ignore
+    
     off<EVENT extends keyof AuthEvents>(
         event: EVENT,
         handler: Handler<AuthEvents[EVENT]>
@@ -128,7 +122,7 @@ export class ProviderTelegram extends EventTarget implements Provider {
 
     connect(options: ConnectOptions): Promise<void> {
         this.options = options;
-		console.log(`ProviderType: ${this.selectedProvider}; NODE_URL: ${this.options.NODE_URL}`);
+		console.log(`ProviderType: ${this.selectedProvider!.type}; NODE_URL: ${this.options.NODE_URL}`);
 		return Promise.resolve();
     }
 

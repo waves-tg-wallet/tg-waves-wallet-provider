@@ -1,6 +1,7 @@
 import { ProviderTelegram } from "./provider";
 export { ProviderTelegram };
 type TLinkDeliveryMethod = 'qr' | 'message' | 'both';
+type TProviderTelegramType = 'site' | 'webapp' | 'iframe';
 interface IProviderTelegramConfig {
     botName: `${string}/${string}`;
     linkDeliveryMethod: TLinkDeliveryMethod;
@@ -14,4 +15,4 @@ interface IProviderTelegramConfig {
     darkButtonColor: string;
     lightDark: boolean;
 }
-export type { TLinkDeliveryMethod, IProviderTelegramConfig };
+export type { TLinkDeliveryMethod, IProviderTelegramConfig, TProviderTelegramType };

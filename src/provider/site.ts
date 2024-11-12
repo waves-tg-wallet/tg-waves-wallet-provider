@@ -128,20 +128,20 @@ export class SiteProviderTelegram implements IProviderTelegram {
 									if (data.status === 'signed') {
 										resolve([data.tx])
 									} else {
-										reject(status)
+										reject(new Error(status));
 									}
 								} catch {
-									reject('something went wrong');
+									reject(new Error('something went wrong'));
 								}
 							};
 						
 							webSocket.onclose = function (_event) {
-								reject('timeout');
+								reject(new Error('timeout'))
 							};
 						
 							webSocket.onerror = function (error) {
 								console.log(error);
-								reject('something went wrong');
+								reject(new Error('something went wrong'));
 							};
 						} else {
 							const container = document.createElement('div');

@@ -8,10 +8,6 @@ export class FrameProviderTelegram implements IProviderTelegram {
     options: ConnectOptions;
     providerConfig: IProviderTelegramConfig;
 
-    sign(toSign: SignerTx[]): Promise<SignedTx<SignerTx[]>> {
-        throw new Error("Method not implemented.");
-    }
-
     constructor(user: UserData, options: ConnectOptions, config: IProviderTelegramConfig) {
         this.options = options;
         this.providerConfig = config;
@@ -24,37 +20,41 @@ export class FrameProviderTelegram implements IProviderTelegram {
         })
     }
 
-    function sendMessageAndWaitForResponse(message) {
-        return new Promise((resolve) => {
-          const timeout = 60000; // 1 минута в миллисекундах
-          let isResolved = false;
-      
-          // Слушатель для получения ответа от родительского окна
-          function handleMessage(event) {
-            // Проверяем источник сообщения для безопасности
-            if (event.origin !== window.origin) return;
-      
-            // Если получен ответ, очищаем таймер и вызываем resolve
-            if (event.data === 'response') { // проверка на нужное сообщение
-              window.removeEventListener('message', handleMessage);
-              isResolved = true;
-              resolve(event.data);
+    public async sign(toSign: SignerTx[]): Promise<SignedTx<SignerTx[]>> {
+        return new Promise(async (resolve, reject) => {
+            const timeout = 60000;
+            let isResolved = false;
+
+            function handleSignedTx(event: MessageEvent) {
+                if (event.origin !== window.origin) {
+                    return;
+                }
+
+                if (event.data && typeof event.data === 'object' && event.data.status) {
+                    window.removeEventListener('message', handleSignedTx);
+                    const signResult = event.data as { tx: SignedTx<SignerTx>, status: 'signed' | 'rejected'};
+                    if (signResult.status === 'signed') {
+                        resolve([signResult.tx])
+                    } else {
+                        reject(new Error('rejected'));
+                    }
+                }
             }
-          }
-      
-          // Добавляем слушатель для ответа от родительского окна
-          window.addEventListener('message', handleMessage);
-      
-          // Отправляем сообщение в родительское окно
-          window.parent.postMessage(message, '*');
-      
-          // Устанавливаем таймер на случай, если ответа не будет
-          setTimeout(() => {
-            if (!isResolved) {
-              window.removeEventListener('message', handleMessage);
-              resolve('Timeout: No response received');
+
+            window.addEventListener('message', handleSignedTx);
+            const message = {
+                method: 'sign_tx_frame',
+                networkByte: this.options.NETWORK_BYTE,
+                tx: toSign
             }
-          }, timeout);
+            window.parent.postMessage(message, '*');
+            
+            setTimeout(() => {
+                if (!isResolved) {
+                    window.removeEventListener('message', handleSignedTx);
+                    reject(new Error('timeout'))
+                }
+            }, timeout);
         });
-      }
+    };
 }
