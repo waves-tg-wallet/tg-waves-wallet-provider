@@ -92,7 +92,7 @@ export class SiteProviderTelegram implements IProviderTelegram {
 			})
 		});
 	}
-	
+
 	public async sign(toSign: SignerTx[]): Promise<SignedTx<SignerTx[]>> {
 		return new Promise(async (resolve, reject) => {
 			const config = this.providerConfig;
@@ -121,7 +121,7 @@ export class SiteProviderTelegram implements IProviderTelegram {
 							const webSocket = new WebSocket(url);
 							webSocket.onmessage = function (event) {
 								try {
-									const data = JSON.parse(event.data) as { tx: SignedTx<SignerTx>, status: 'signed' | 'rejected'};
+									const data = JSON.parse(event.data) as { tx: SignedTx<SignerTx>, status: 'signed' | 'rejected' };
 									if (webSocket.OPEN) {
 										webSocket.close();
 									}
@@ -134,11 +134,11 @@ export class SiteProviderTelegram implements IProviderTelegram {
 									reject(new Error('something went wrong'));
 								}
 							};
-						
+
 							webSocket.onclose = function (_event) {
 								reject(new Error('timeout'))
 							};
-						
+
 							webSocket.onerror = function (error) {
 								console.log(error);
 								reject(new Error('something went wrong'));
@@ -148,7 +148,7 @@ export class SiteProviderTelegram implements IProviderTelegram {
 							document.body.appendChild(container);
 							const app = createApp({
 								setup() {
-									const handleConnected = (value: { tx: SignedTx<SignerTx>, status: 'signed' | 'rejected'}) => {
+									const handleConnected = (value: { tx: SignedTx<SignerTx>, status: 'signed' | 'rejected' }) => {
 										if (value.status === 'signed') {
 											resolve([value.tx])
 										} else {
@@ -157,7 +157,7 @@ export class SiteProviderTelegram implements IProviderTelegram {
 										app.unmount();
 										document.body.removeChild(container);
 									}
-			
+
 									const handleRejected = (value: string) => {
 										reject(new Error(value))
 										app.unmount();
@@ -186,11 +186,111 @@ export class SiteProviderTelegram implements IProviderTelegram {
 							});
 							app.mount(container);
 						}
+					} else {
+						reject(new Error("signing request failed"))
 					}
 				} catch (ex) {
 					console.log(ex)
 					return reject();
 				}
+			}
+		})
+	}
+
+	public async signMessage(toSign: string | number): Promise<string> {
+		return new Promise(async (resolve, reject) => {
+			const config = this.providerConfig;
+			const options = this.options;
+			try {
+				const token = Cookies.get('token');
+				if (token === undefined) {
+					reject("Please, login first")
+				}
+				const withMessage = config.linkDeliveryMethod === 'message' || config.linkDeliveryMethod === 'both';
+				const message = `${toSign}`;
+				const requested = await post<{ id: string, status: 'success' | 'failed' }>('/message_sign/signing_request', {
+					messageToSign: message,
+					networkByte: this.options.NETWORK_BYTE,
+					withMessage
+				}, token);
+				const { id, status } = requested;
+				if (status && status === 'success') {
+					if (config.linkDeliveryMethod === 'message') {
+						const url = `${import.meta.env.VITE_WS_PROVIDER_URL}/?token=${id}`;
+						const webSocket = new WebSocket(url);
+						webSocket.onmessage = function (event) {
+							try {
+								const data = JSON.parse(event.data) as { signature: string, status: 'signed' | 'rejected' };
+								if (webSocket.OPEN) {
+									webSocket.close();
+								}
+								if (data.status === 'signed') {
+									resolve(data.signature)
+								} else {
+									reject(new Error(status));
+								}
+							} catch {
+								reject(new Error('something went wrong'));
+							}
+						};
+
+						webSocket.onclose = function (_event) {
+							reject(new Error('timeout'))
+						};
+
+						webSocket.onerror = function (error) {
+							console.log(error);
+							reject(new Error('something went wrong'));
+						};
+					} else {
+						const container = document.createElement('div');
+						document.body.appendChild(container);
+						const app = createApp({
+							setup() {
+								const handleConnected = (value: { signature: string, status: 'signed' | 'rejected' }) => {
+									if (value.status === 'signed') {
+										resolve(value.signature)
+									} else {
+										reject(new Error('user rejected'))
+									}
+									app.unmount();
+									document.body.removeChild(container);
+								}
+
+								const handleRejected = (value: string) => {
+									reject(new Error(value))
+									app.unmount();
+									document.body.removeChild(container);
+								}
+
+								const signerData = {
+									method: 'sign_msg_rpc',
+									id,
+									networkByte: options.NETWORK_BYTE
+								};
+
+								const props = {
+									id: id,
+									config: config,
+									title: "Sign message",
+									signerData
+								}
+
+								return () => h(Signer, {
+									...props,
+									onConnected: handleConnected,
+									onRejected: handleRejected
+								});
+							}
+						});
+						app.mount(container);
+					}
+				} else {
+					reject(new Error("signing request failed"))
+				}
+			} catch (ex) {
+				console.log(ex)
+				return reject();
 			}
 		})
 	}

@@ -12,6 +12,7 @@ export interface IProviderTelegram {
     options: ConnectOptions;
     login(): Promise<UserData>;
     sign(toSign: SignerTx[]): Promise<SignedTx<SignerTx[]>>;
+    signMessage(data: string | number): Promise<string>;
 }
 
 export class ProviderTelegram extends EventTarget implements Provider {
@@ -45,7 +46,6 @@ export class ProviderTelegram extends EventTarget implements Provider {
         script.type = "text/javascript";
         script.src = "https://telegram.org/js/telegram-web-app.js";
         script.onload = () => {
-            console.log("check webapp", window.Telegram.WebApp.initData);
             if (window.Telegram && window.Telegram.WebApp.initData.length > 0) {
                 this.selectedProvider = new WebAppProviderTelegram(this.options, this.providerConfig); //'webapp';
                 this.eventTarget.dispatchEvent(new CustomEvent("injected", { detail: "webapp" }));
@@ -53,9 +53,10 @@ export class ProviderTelegram extends EventTarget implements Provider {
                 this.selectedProvider = new SiteProviderTelegram(this.options, this.providerConfig); //'site';
                 this.eventTarget.dispatchEvent(new CustomEvent("injected", { detail: "site" }));
             }
+            console.log(`ProviderType: ${this.selectedProvider!.type}; NODE_URL: ${this.options.NODE_URL}`);
         };
         script.onerror = () => {
-            console.log("Error occurred while loading telegram");
+            console.log(`Error occurred while loading telegram; ProviderType: ${this.selectedProvider!.type}; NODE_URL: ${this.options.NODE_URL}`);
             this.selectedProvider = new SiteProviderTelegram(this.options, this.providerConfig); //'site';
             this.eventTarget.dispatchEvent(new CustomEvent("injected", { detail: "site" }));
         };
@@ -86,14 +87,33 @@ export class ProviderTelegram extends EventTarget implements Provider {
         throw new Error("Method not implemented.");
     }
 
+    private waitForLogin(timeout: number): Promise<UserData> {
+        return new Promise((resolve, reject) => {
+            const interval = 100; // Интервал проверки в миллисекундах
+            let elapsed = 0;
+
+            const checkProvider = () => {
+                elapsed += interval;
+    
+                if (this.selectedProvider) {
+                    clearInterval(timer);
+                    resolve(this.selectedProvider!.login());
+                } else if (elapsed >= timeout) {
+                    clearInterval(timer);
+                    reject(new Error('timeout')); // Таймаут, вернуть undefined
+                }
+            };
+            const timer = setInterval(checkProvider, interval);
+        })
+    }
+
     connect(options: ConnectOptions): Promise<void> {
         this.options = options;
-        console.log(`ProviderType: ${this.selectedProvider!.type}; NODE_URL: ${this.options.NODE_URL}`);
         return Promise.resolve();
     }
 
     login(): Promise<UserData> {
-        return this.selectedProvider!.login();
+        return this.waitForLogin(5000);
     }
 
     async logout(): Promise<void> {
@@ -104,13 +124,13 @@ export class ProviderTelegram extends EventTarget implements Provider {
         } catch {}
         return Promise.resolve();
     }
-    //@ts-ignore
+    //@ts-ignore 
     signMessage(data: string | number): Promise<string> {
-        throw new Error("Method not implemented.");
+        return this.selectedProvider!.signMessage(data);
     }
     //@ts-ignore
     signTypedData(data: Array<TypedData>): Promise<string> {
-        throw new Error("Method not implemented.");
+        throw new Error("signTypedData not implemented.");
     }
     sign<T extends SignerTx>(toSign: T[]): Promise<SignedTx<T>>;
     sign<T extends Array<SignerTx>>(toSign: T): Promise<SignedTx<T>>;
@@ -121,12 +141,13 @@ export class ProviderTelegram extends EventTarget implements Provider {
     }
 
     public isAlive(): Promise<UserData> {
+        const provider = this.selectedProvider;
         return new Promise(async (resolve) => {
             try {
                 const token = Cookies.get("token");
                 if (token) {
                     const body: { providerType: TProviderTelegramType; url: string } = {
-                        providerType: this.selectedProvider!.type,
+                        providerType: provider!.type,
                         url: document.location.hostname,
                     };
                     const resp = await loadConnection(body, token);

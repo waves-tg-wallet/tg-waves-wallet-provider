@@ -103,7 +103,7 @@ export class WebAppProviderTelegram implements IProviderTelegram {
 					}
 					
 					const tx = toSign[0];
-					const requested = await post<{ id: string, status: 'success' | 'failed' }>('/transaction/webapp_request_sign', {
+					const requested = await post<{ id: string, status: 'success' | 'failed' }>('/transaction/signing_request', {
 						tx: {
 							...tx
 						},
@@ -153,6 +153,66 @@ export class WebAppProviderTelegram implements IProviderTelegram {
 					console.log(ex)
 					return reject();
 				}
+			}
+		})
+	}
+
+	public async signMessage(toSign: string | number): Promise<string> {
+		return new Promise(async (resolve, reject) => {
+			try {
+				const config = this.providerConfig;
+				const token = Cookies.get('token');
+				if (token === undefined) {
+					reject("Please, login first")
+				}
+				const message = `${toSign}`;
+				const requested = await post<{ id: string, status: 'success' | 'failed' }>('/message_sign/signing_request', {
+					messageToSign: message,
+					networkByte: this.options.NETWORK_BYTE
+				}, token);
+				const { id, status } = requested;
+				if (status === 'success') {
+					const queryString = window.btoa(JSON.stringify({
+						method: 'sign_msg_rpc',
+						id,
+						networkByte: this.options.NETWORK_BYTE
+					}));
+					const pathname = `?startapp=${queryString}`;
+					const url = `https://t.me/${config.botName}${pathname}`;
+					const wsUrl = `${import.meta.env.VITE_WS_PROVIDER_URL}/?token=${id}`;
+					const webSocket = new WebSocket(wsUrl);
+					webSocket.onmessage = function (event) {
+						try {
+							const data = JSON.parse(event.data) as { signature: string, status: 'signed' | 'rejected'};
+							if (webSocket.OPEN) {
+								webSocket.close();
+							}
+							if (data.status === 'signed') {
+								resolve(data.signature)
+							} else {
+								reject(status)
+							}
+						} catch {
+							reject('something went wrong');
+						}
+					};
+				
+					webSocket.onclose = function (_event) {
+						reject('timeout');
+					};
+				
+					webSocket.onerror = function (error) {
+						console.log(error);
+						reject('something went wrong');
+					};
+
+					window.Telegram.WebApp.openTelegramLink(url);
+				} else {
+					reject('unable to send request')
+				}
+			} catch (ex) {
+				console.log(ex)
+				return reject();
 			}
 		})
 	}
