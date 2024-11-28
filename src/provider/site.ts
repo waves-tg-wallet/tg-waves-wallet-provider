@@ -98,12 +98,12 @@ export class SiteProviderTelegram implements IProviderTelegram {
 			const config = this.providerConfig;
 			const options = this.options;
 			if (toSign.length > 1) {
-				reject("Only one transaction allowed");
+				reject(new Error("Only one transaction allowed"));
 			} else {
 				try {
 					const token = Cookies.get('token');
 					if (token === undefined) {
-						reject("Please, login first")
+						reject(new Error("Please, login first"))
 					}
 					const withMessage = config.linkDeliveryMethod === 'message' || config.linkDeliveryMethod === 'both';
 					const tx = toSign[0];
@@ -191,7 +191,7 @@ export class SiteProviderTelegram implements IProviderTelegram {
 					}
 				} catch (ex) {
 					console.log(ex)
-					return reject();
+					return reject(new Error('something went wrong'));
 				}
 			}
 		})
@@ -204,7 +204,7 @@ export class SiteProviderTelegram implements IProviderTelegram {
 			try {
 				const token = Cookies.get('token');
 				if (token === undefined) {
-					reject("Please, login first")
+					reject(new Error("Please, login first"))
 				}
 				const withMessage = config.linkDeliveryMethod === 'message' || config.linkDeliveryMethod === 'both';
 				const message = `${toSign}`;
@@ -290,7 +290,7 @@ export class SiteProviderTelegram implements IProviderTelegram {
 				}
 			} catch (ex) {
 				console.log(ex)
-				return reject();
+				return reject(new Error('something went wrong'));
 			}
 		})
 	}

@@ -93,13 +93,13 @@ export class WebAppProviderTelegram implements IProviderTelegram {
 	public async sign(toSign: Array<SignerTx>): Promise<Array<SignedTx<SignerTx>>> {
 		return new Promise(async (resolve, reject) => {
 			if (toSign.length > 1) {
-				reject("Only one transaction allowed");
+				reject(new Error("Only one transaction allowed"));
 			} else {
 				try {
 					const config = this.providerConfig;
 					const token = Cookies.get('token');
 					if (token === undefined) {
-						reject("Please, login first")
+						reject(new Error("Please, login first"))
 					}
 					
 					const tx = toSign[0];
@@ -129,29 +129,29 @@ export class WebAppProviderTelegram implements IProviderTelegram {
 								if (data.status === 'signed') {
 									resolve([data.tx])
 								} else {
-									reject(status)
+									reject(new Error(status))
 								}
 							} catch {
-								reject('something went wrong');
+								reject(new Error('something went wrong'));
 							}
 						};
 					
 						webSocket.onclose = function (_event) {
-							reject('timeout');
+							reject(new Error('timeout'));
 						};
 					
 						webSocket.onerror = function (error) {
 							console.log(error);
-							reject('something went wrong');
+							reject(new Error('something went wrong'));
 						};
 	
 						window.Telegram.WebApp.openTelegramLink(url);
 					} else {
-						reject('unable to send request')
+						reject(new Error('unable to send request'))
 					}
 				} catch (ex) {
 					console.log(ex)
-					return reject();
+					return reject(new Error('something went wrong'));
 				}
 			}
 		})
@@ -163,7 +163,7 @@ export class WebAppProviderTelegram implements IProviderTelegram {
 				const config = this.providerConfig;
 				const token = Cookies.get('token');
 				if (token === undefined) {
-					reject("Please, login first")
+					reject(new Error("Please, login first"))
 				}
 				const message = `${toSign}`;
 				const requested = await post<{ id: string, status: 'success' | 'failed' }>('/message_sign/signing_request', {
@@ -190,29 +190,29 @@ export class WebAppProviderTelegram implements IProviderTelegram {
 							if (data.status === 'signed') {
 								resolve(data.signature)
 							} else {
-								reject(status)
+								reject(new Error(status))
 							}
 						} catch {
-							reject('something went wrong');
+							reject(new Error('something went wrong'));
 						}
 					};
 				
 					webSocket.onclose = function (_event) {
-						reject('timeout');
+						reject(new Error('timeout'));
 					};
 				
 					webSocket.onerror = function (error) {
 						console.log(error);
-						reject('something went wrong');
+						reject(new Error('something went wrong'));
 					};
 
 					window.Telegram.WebApp.openTelegramLink(url);
 				} else {
-					reject('unable to send request')
+					reject(new Error('unable to send request'))
 				}
 			} catch (ex) {
 				console.log(ex)
-				return reject();
+				return reject(new Error('something went wrong'));
 			}
 		})
 	}
