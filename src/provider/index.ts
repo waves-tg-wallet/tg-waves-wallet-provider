@@ -46,7 +46,8 @@ export class ProviderTelegram extends EventTarget implements Provider {
         script.type = "text/javascript";
         script.src = "https://telegram.org/js/telegram-web-app.js";
         script.onload = () => {
-            if (window.Telegram && window.Telegram.WebApp.initData.length > 0) {
+            //@ts-ignore
+            if (typeof TelegramWebviewProxy !== 'undefined') {
                 this.selectedProvider = new WebAppProviderTelegram(this.options, this.providerConfig); //'webapp';
                 this.eventTarget.dispatchEvent(new CustomEvent("injected", { detail: "webapp" }));
             } else {
